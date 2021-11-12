@@ -233,6 +233,7 @@ extern QS_PFNGLUNIFORM4FPROC GL_Uniform4fFunc;
 extern	qboolean	gl_glsl_able;
 extern	qboolean	gl_glsl_gamma_able;
 extern	qboolean	gl_glsl_alias_able;
+extern	qboolean	gl_glsl_water_able;
 // ericw --
 
 //ericw -- NPOT texture support
@@ -312,8 +313,6 @@ struct lightmap_s
 };
 extern struct lightmap_s *lightmaps;
 extern int lightmap_count;	//allocated lightmaps
-
-extern int gl_warpimagesize; //johnfitz -- for water warp
 
 extern qboolean r_drawflat_cheatsafe, r_fullbright_cheatsafe, r_lightmap_cheatsafe, r_drawworld_cheatsafe; //johnfitz
 

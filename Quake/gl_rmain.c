@@ -560,8 +560,6 @@ void R_SetupView (void)
 
 	R_MarkSurfaces (); //johnfitz -- create texture chains from PVS
 
-	R_UpdateWarpTextures (); //johnfitz -- do this before R_Clear
-
 	R_Clear ();
 
 	//johnfitz -- cheat-protect some draw modes
