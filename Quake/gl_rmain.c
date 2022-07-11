@@ -69,6 +69,7 @@ cvar_t	r_pos = {"r_pos","0",CVAR_NONE};
 cvar_t	r_fullbright = {"r_fullbright","0",CVAR_NONE};
 cvar_t	r_lightmap = {"r_lightmap","0",CVAR_NONE};
 cvar_t	r_shadows = {"r_shadows","0",CVAR_ARCHIVE};
+cvar_t	r_shadow_alpha = {"r_shadow_alpha","0.5",CVAR_ARCHIVE};	//added by Adam Pajor
 cvar_t	r_wateralpha = {"r_wateralpha","1",CVAR_ARCHIVE};
 cvar_t	r_dynamic = {"r_dynamic","1",CVAR_ARCHIVE};
 cvar_t	r_novis = {"r_novis","0",CVAR_ARCHIVE};

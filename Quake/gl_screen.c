@@ -102,6 +102,8 @@ cvar_t		gl_triplebuffer = {"gl_triplebuffer", "1", CVAR_ARCHIVE};
 
 cvar_t		cl_gun_fovscale = {"cl_gun_fovscale","1",CVAR_ARCHIVE}; // Qrack
 
+cvar_t		showspeed = { "showspeed","0",CVAR_ARCHIVE }; // Qrack
+
 extern	cvar_t	crosshair;
 
 qboolean	scr_initialized;		// ready to draw
@@ -512,6 +514,8 @@ void SCR_Init (void)
 	Cvar_RegisterVariable (&gl_triplebuffer);
 	Cvar_RegisterVariable (&cl_gun_fovscale);
 
+	Cvar_RegisterVariable(&showspeed);
+
 	Cmd_AddCommand ("screenshot",SCR_ScreenShot_f);
 	Cmd_AddCommand ("sizeup",SCR_SizeUp_f);
 	Cmd_AddCommand ("sizedown",SCR_SizeDown_f);
@@ -563,6 +567,55 @@ void SCR_DrawFPS (void)
 		if (scr_clock.value) y -= 8; //make room for clock
 		GL_SetCanvas (CANVAS_BOTTOMRIGHT);
 		Draw_String (x, y, st);
+		scr_tileclear_updates = 0;
+	}
+}
+
+/*
+==============
+showspeed -- Adam Pajor
+==============
+*/
+void ShowSpeed(void)
+{
+	if (showspeed.value>=1)
+	{
+		char	st[32];
+		int	x, y;
+		float  movementspeed = 0;
+		vec3_t movementvec;
+		vec3_t temp_mv;
+
+		if (showspeed.value == 1)
+		{
+			movementspeed = (VectorLength(cl.velocity));
+			sprintf(st, "%4.0f ups", movementspeed);
+		}
+		else
+		if (showspeed.value == 2)
+		{
+			
+			temp_mv[0] = cl.velocity[0];
+			temp_mv[1] = cl.velocity[1];
+
+
+			temp_mv[2] = 0;		//Ignore vertical speed... just... ignore it. It's zero. 0. Nihil... Nothing...
+
+			movementspeed = (VectorLength(temp_mv));
+
+			sprintf(st, "%4.0f ups", temp_mv[0]+temp_mv[1]);
+			//sprintf(st, "%4.0f ups sd", temp_mv[1]);
+
+		}
+		//int movementspeed = 66666;
+
+		//sprintf(st, "%4.0f ups", movementspeed);
+		
+		
+		x = 32 - (strlen(st) << 3);
+		y = 16;
+		GL_SetCanvas(CANVAS_CENTER);
+		Draw_String(x, y, st);
 		scr_tileclear_updates = 0;
 	}
 }
@@ -1253,6 +1306,7 @@ void SCR_UpdateScreen (void)
 		SCR_DrawFPS (); //johnfitz
 		SCR_DrawClock (); //johnfitz
 		SCR_DrawConsole ();
+		ShowSpeed(); //Adam Pajor
 		M_Draw ();
 	}
 

@@ -1360,7 +1360,7 @@ cleanup:
 }
 
 //johnfitz -- values for shadow matrix
-#define SHADOW_SKEW_X -0.7 //skew along x axis. -0.7 to mimic glquake shadows
+#define SHADOW_SKEW_X -0.0 //skew along x axis. -0.7 to mimic glquake shadows
 #define SHADOW_SKEW_Y 0 //skew along y axis. 0 to mimic glquake shadows
 #define SHADOW_VSCALE 0 //0=completely flat
 #define SHADOW_HEIGHT 0.1 //how far above the floor to render the shadow
@@ -1373,14 +1373,14 @@ GL_DrawAliasShadow -- johnfitz -- rewritten
 TODO: orient shadow onto "lightplane" (a global mplane_t*)
 =============
 */
-void GL_DrawAliasShadow (entity_t *e)
+void GL_DrawAliasShadow(entity_t* e)
 {
-	float	shadowmatrix[16] = {1,				0,				0,				0,
+	float	shadowmatrix[16] = { 1,				0,				0,				0,
 								0,				1,				0,				0,
 								SHADOW_SKEW_X,	SHADOW_SKEW_Y,	SHADOW_VSCALE,	0,
-								0,				0,				SHADOW_HEIGHT,	1};
+								0,				0,				SHADOW_HEIGHT,	1 };
 	float		lheight;
-	aliashdr_t	*paliashdr;
+	aliashdr_t* paliashdr;
 	lerpdata_t	lerpdata;
 
 	if (R_CullModelForEntity(e))
@@ -1392,23 +1392,26 @@ void GL_DrawAliasShadow (entity_t *e)
 	entalpha = ENTALPHA_DECODE(e->alpha);
 	if (entalpha == 0) return;
 
-	paliashdr = (aliashdr_t *)Mod_Extradata (e->model);
-	R_SetupAliasFrame (paliashdr, e, &lerpdata);
-	R_SetupEntityTransform (e, &lerpdata);
-	R_LightPoint (e->origin);
+	paliashdr = (aliashdr_t*)Mod_Extradata(e->model);
+	R_SetupAliasFrame(paliashdr, e, &lerpdata);
+	R_SetupEntityTransform(e, &lerpdata);
+	R_LightPoint(e->origin);
 	lheight = currententity->origin[2] - lightspot[2];
 
-// set up matrix
-	glPushMatrix ();
-	glTranslatef (lerpdata.origin[0],  lerpdata.origin[1],  lerpdata.origin[2]);
-	glTranslatef (0,0,-lheight);
-	glMultMatrixf (shadowmatrix);
-	glTranslatef (0,0,lheight);
-	glRotatef (lerpdata.angles[1],  0, 0, 1);
-	glRotatef (-lerpdata.angles[0],  0, 1, 0);
-	glRotatef (lerpdata.angles[2],  1, 0, 0);
-	glTranslatef (paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
-	glScalef (paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
+	// set up matrix
+	glPushMatrix();
+	glTranslatef(lerpdata.origin[0], lerpdata.origin[1], lerpdata.origin[2]);
+	glTranslatef(0, 0, -lheight);
+	glMultMatrixf(shadowmatrix);
+	glTranslatef(0, 0, lheight);
+	glRotatef(lerpdata.angles[1], 0, 0, 1);
+	glRotatef(-lerpdata.angles[0], 0, 1, 0);
+	glRotatef(lerpdata.angles[2], 1, 0, 0);
+	glTranslatef(paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
+	glScalef(paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
+
+
+
 
 // draw it
 	glDepthMask(GL_FALSE);
@@ -1416,7 +1419,7 @@ void GL_DrawAliasShadow (entity_t *e)
 	GL_DisableMultitexture ();
 	glDisable (GL_TEXTURE_2D);
 	shading = false;
-	glColor4f(0,0,0,entalpha * 0.5);
+	glColor4f(0,0,0,entalpha * r_shadow_alpha.value); //0.5 was originally, added a cvar to control it.
 	GL_DrawAliasFrame (paliashdr, lerpdata);
 	glEnable (GL_TEXTURE_2D);
 	glDisable (GL_BLEND);

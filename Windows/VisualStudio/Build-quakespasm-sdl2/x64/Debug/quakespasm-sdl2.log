@@ -1,0 +1,142 @@
+﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(499,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
+cl : command line warning D9035: option 'Gm' has been deprecated and will be removed in a future release
+  zone.c
+  world.c
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\world.c(1194,22): warning C4146: unary minus operator applied to unsigned type, result still unsigned
+  wad.c
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\wad.c(103,70): warning C4018: '>': signed/unsigned mismatch
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\wad.c(109,34): warning C4018: '<': signed/unsigned mismatch
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\wad.c(149,32): warning C4018: '<': signed/unsigned mismatch
+  view.c
+  sys_sdl_win.c
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\sys_sdl_win.c(249,7): warning C4996: 'GetVersionExA': was declared deprecated
+  sv_user.c
+  sv_phys.c
+  sv_move.c
+  sv_main.c
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\sv_main.c(52,15): warning C4090: 'function': different 'const' qualifiers
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\sv_main.c(1922,29): warning C4018: '>': signed/unsigned mismatch
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\sv_main.c(3048,12): warning C4018: '<': signed/unsigned mismatch
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\sv_main.c(3059,13): warning C4018: '<': signed/unsigned mismatch
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\sv_main.c(3067,12): warning C4018: '<': signed/unsigned mismatch
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\sv_main.c(3078,13): warning C4018: '<': signed/unsigned mismatch
+  strlcpy.c
+  strlcat.c
+  snd_xmp.c
+  snd_wave.c
+  snd_vorbis.c
+  snd_voip.c
+  snd_umx.c
+  snd_sdl.c
+  snd_opus.c
+  snd_mp3tag.c
+  snd_mp3.c
+  Generating Code...
+  Compiling...
+  snd_modplug.c
+  snd_mix.c
+  snd_mikmod.c
+  snd_mem.c
+  snd_flac.c
+  snd_dma.c
+  snd_codec.c
+  sbar.c
+  r_world.c
+  r_sprite.c
+  r_part_fte.c
+  r_part.c
+  r_brush.c
+  r_alias.c
+  pr_ext.c
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\pr_ext.c(3704,16): warning C4018: '<': signed/unsigned mismatch
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\pr_ext.c(6819,15): warning C4018: '<': signed/unsigned mismatch
+  pr_exec.c
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\pr_exec.c(365,20): warning C4018: '>=': signed/unsigned mismatch
+  pr_edict.c
+  pr_cmds.c
+  pl_win.c
+  net_wipx.c
+  Generating Code...
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\pr_ext.c(3847): warning C4700: uninitialized local variable 'ent' used
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\pr_ext.c(3959): warning C4700: uninitialized local variable 'ent' used
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\pr_ext.c(3903): warning C4700: uninitialized local variable 'ent' used
+  Compiling...
+  net_wins.c
+  net_win.c
+  net_main.c
+  net_loop.c
+  net_dgrm.c
+  menu.c
+  mdfour.c
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\mdfour.c(169,16): warning C4267: '+=': conversion from 'size_t' to 'unsigned int', possible loss of data
+  mathlib.c
+  main_sdl.c
+  keys.c
+  in_sdl.c
+  image.c
+  host_cmd.c
+  host.c
+  gl_warp.c
+  gl_vidsdl.c
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\gl_vidsdl.c(925,42): warning C4098: 'GL_PrintNiceExtensionsList': 'void' function returning a value
+  gl_texmgr.c
+  gl_sky.c
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\gl_sky.c(134,15): warning C4018: '<': signed/unsigned mismatch
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\gl_sky.c(147,15): warning C4018: '<': signed/unsigned mismatch
+  gl_screen.c
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\gl_screen.c(586,10): warning C4101: 'movementvec': unreferenced local variable
+  gl_rmisc.c
+  Generating Code...
+  Compiling...
+  gl_rmain.c
+  gl_rlight.c
+  gl_refrag.c
+  gl_model.c
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\gl_model.c(553,12): warning C4018: '<': signed/unsigned mismatch
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\gl_model.c(626,20): warning C4018: '>': signed/unsigned mismatch
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\gl_model.c(766,21): warning C4018: '>=': signed/unsigned mismatch
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\gl_model.c(1074,16): warning C4018: '<': signed/unsigned mismatch
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\gl_model.c(1102,17): warning C4018: '<': signed/unsigned mismatch
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\gl_model.c(1124,17): warning C4018: '<': signed/unsigned mismatch
+  gl_mesh.c
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\gl_mesh.c(1053,80): warning C4018: '<': signed/unsigned mismatch
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\gl_mesh.c(1079,17): warning C4018: '<': signed/unsigned mismatch
+  gl_fog.c
+  gl_draw.c
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\gl_draw.c(267,15): warning C4018: '<': signed/unsigned mismatch
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\gl_draw.c(269,16): warning C4018: '<': signed/unsigned mismatch
+  fs_zip.c
+  zips supported but with no zlib
+  cvar.c
+  crc.c
+  console.c
+  common.c
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\common.c(2442,17): warning C4018: '<': signed/unsigned mismatch
+  cmd.c
+  cl_tent.c
+  cl_parse.c
+  cl_main.c
+  cl_input.c
+  cl_demo.c
+  chase.c
+  cfgfile.c
+  Generating Code...
+  Compiling...
+  cd_sdl.c
+  Warning: SDL CDAudio support disabled
+  bgmusic.c
+  Generating Code...
+  quakespasm-sdl2.vcxproj -> D:\Games\GOG Games\Quake\quakespasm-sdl2.exe
+  D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\codecs\x64\libFLAC-8.dll
+  D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\codecs\x64\libmad-0.dll
+  D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\codecs\x64\libmikmod-3.dll
+  D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\codecs\x64\libmpg123-0.dll
+  D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\codecs\x64\libogg-0.dll
+  D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\codecs\x64\libopus-0.dll
+  D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\codecs\x64\libopusfile-0.dll
+  D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\codecs\x64\libvorbis-0.dll
+  D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\codecs\x64\libvorbisfile-3.dll
+  D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\codecs\x64\libxmp.dll
+         10 file(s) copied.
+  D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\SDL2\lib64\SDL2.dll
+          1 file(s) copied.

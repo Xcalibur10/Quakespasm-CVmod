@@ -86,13 +86,19 @@ void Chase_UpdateForDrawing (void)
 	int		i;
 	vec3_t	forward, up, right;
 	vec3_t	ideal, crosshair, temp;
+	vec3_t	test_angles;
 
-	AngleVectors (cl.viewangles, forward, right, up);
+	test_angles[0] = 1;
+	test_angles[1] = 0;
+	test_angles[2] = 0;
+
+	AngleVectors (r_refdef.viewangles, forward, right, up);
+	//AngleVectors(test_angles, forward, right, up);
 
 	// calc ideal camera location before checking for walls
 	for (i=0 ; i<3 ; i++)
 		ideal[i] = cl.viewent.origin[i]
-		- forward[i]*chase_back.value
+		- forward[i]*(chase_back.value)
 		+ right[i]*chase_right.value;
 		//+ up[i]*chase_up.value;
 	ideal[2] = cl.viewent.origin[2] + chase_up.value;
@@ -113,6 +119,8 @@ void Chase_UpdateForDrawing (void)
 	VectorSubtract (crosshair, r_refdef.vieworg, temp);
 	VectorAngles (temp, NULL, r_refdef.viewangles);
 	if (r_refdef.viewangles[PITCH] == 90 || r_refdef.viewangles[PITCH] == -90)
+	{
 		r_refdef.viewangles[YAW] = cl.viewangles[YAW];
+	}
 }
 

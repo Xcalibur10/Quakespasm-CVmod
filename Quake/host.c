@@ -256,10 +256,12 @@ void	Host_FindMaxClients (void)
 		Cvar_SetQuick (&deathmatch, "0");
 }
 
-void Host_Version_f (void)
+void Host_Version_f (void)		 
 {
 	Con_Printf ("Quake Version %1.2f\n", VERSION);
 	Con_Printf ("QuakeSpasm Version " QUAKESPASM_VER_STRING "\n");
+	//Con_Printf("QuakeSpasm-Spiked Build " QS_STRINGIFY(QSS_DATE) "\n");
+	Con_Printf ("Modified by Adam Pajor\n");
 #ifdef QSS_VERSION
 	Con_Printf ("QSS Git Description " QS_STRINGIFY(QSS_VERSION) "\n");
 #endif

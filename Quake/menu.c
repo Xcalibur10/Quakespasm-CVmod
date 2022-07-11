@@ -1745,7 +1745,7 @@ static void M_Extras_AdjustSliders (int dir)
 		break;
 	case EXTRAS_AUDIORATE:
 		Cvar_SetValueQuick (&snd_mixspeed, (snd_mixspeed.value==48000)?44100:48000);
-		Cbuf_AddText("\nsnd_restart\n");
+		//Cbuf_AddText("\nsnd_restart\n");
 		break;
 	case EXTRAS_ITEMS:	//not a real option
 		break;
@@ -1851,7 +1851,7 @@ void M_Extras_Draw (void)
 			M_Print (16, y,	"            Audio Rate");
 			if (snd_mixspeed.value == 48000)
 				M_Print (220, y, "48000 hz (DVD)");
-			else if (r_particles.value == 1)
+			else if (snd_mixspeed.value == 44100) //THERE WAS A MISTAKE HERE ORIGINALLY, FIXED (Took value from particle style instead of audio sampling rate.)
 				M_Print (220, y, "44100 hz (CD)");
 			else
 				M_Print (220, y, va("%i hz", (int)snd_mixspeed.value));

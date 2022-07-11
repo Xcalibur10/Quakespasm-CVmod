@@ -59,7 +59,7 @@ texture_t *R_TextureAnimation (texture_t *base, int frame)
 	if (!base->anim_total)
 		return base;
 
-	relative = (int)(cl.time*10) % base->anim_total;
+	relative = (int)(cl.time* cl_texturespeed.value) % base->anim_total;
 
 	count = 0;
 	while (base->anim_min > relative || base->anim_max <= relative)

@@ -54,7 +54,7 @@ state bit 2 is edge triggered on the down to up transition
 kbutton_t	in_mlook, in_klook;
 kbutton_t	in_left, in_right, in_forward, in_back;
 kbutton_t	in_lookup, in_lookdown, in_moveleft, in_moveright;
-kbutton_t	in_strafe, in_speed, in_jump, in_attack, in_button3, in_button4, in_button5, in_button6, in_button7, in_button8;
+kbutton_t	in_strafe, in_speed, in_sprint, in_jump, in_attack, in_button3, in_button4, in_button5, in_button6, in_button7, in_button8;
 kbutton_t	in_up, in_down;
 
 int			in_impulse;
@@ -169,6 +169,10 @@ void IN_MoverightUp(void) {KeyUp(&in_moveright);}
 
 void IN_SpeedDown(void) {KeyDown(&in_speed);}
 void IN_SpeedUp(void) {KeyUp(&in_speed);}
+
+void IN_SprintDown(void) { KeyDown(&in_sprint); }
+void IN_SprintUp(void) { KeyUp(&in_sprint); }
+
 void IN_StrafeDown(void) {KeyDown(&in_strafe);}
 void IN_StrafeUp(void) {KeyUp(&in_strafe);}
 
@@ -634,6 +638,8 @@ void CL_InitInput (void)
 	Cmd_AddCommand ("-moveright", IN_MoverightUp);
 	Cmd_AddCommand ("+speed", IN_SpeedDown);
 	Cmd_AddCommand ("-speed", IN_SpeedUp);
+	Cmd_AddCommand("+sprint", IN_SprintDown);	//Alternative sprinting
+	Cmd_AddCommand("-sprint", IN_SprintUp);		//Alternative sprinting
 	Cmd_AddCommand ("+attack", IN_AttackDown);
 	Cmd_AddCommand ("-attack", IN_AttackUp);
 	Cmd_AddCommand ("+use", IN_UseDown);

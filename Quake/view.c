@@ -40,7 +40,7 @@ cvar_t	scr_ofsz = {"scr_ofsz","0", CVAR_NONE};
 cvar_t	cl_rollspeed = {"cl_rollspeed", "200", CVAR_NONE};
 cvar_t	cl_rollangle = {"cl_rollangle", "2.0", CVAR_NONE};
 
-cvar_t	cl_bob = {"cl_bob","0.02", CVAR_NONE};
+cvar_t	cl_bob = {"cl_bob","0.02", CVAR_ARCHIVE};
 cvar_t	cl_bobcycle = {"cl_bobcycle","0.6", CVAR_NONE};
 cvar_t	cl_bobup = {"cl_bobup","0.5", CVAR_NONE};
 
@@ -682,7 +682,7 @@ void V_BoundOffsets (void)
 
 	ent = &cl.entities[cl.viewentity];
 
-// absolutely bound refresh reletive to entity clipping hull
+// absolutely bound refresh relative to entity clipping hull
 // so the view can never be inside a solid wall
 
 	if (r_refdef.vieworg[0] < ent->origin[0] - 14)
@@ -812,6 +812,11 @@ void V_CalcRefdef (void)
 	r_refdef.vieworg[2] += 1.0/32;
 
 	VectorCopy (cl.viewangles, r_refdef.viewangles);
+	//r_refdef.viewangles[1] = 0; //FIX CAMERA! REMOVE LATER
+	
+	
+
+
 	V_CalcViewRoll ();
 	V_AddIdle ();
 

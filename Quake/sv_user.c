@@ -166,13 +166,27 @@ SV_Accelerate
 ==============
 */
 cvar_t	sv_maxspeed = {"sv_maxspeed", "320", CVAR_NOTIFY|CVAR_SERVERINFO};
+cvar_t	sv_maxsidespeed = { "sv_maxsidespeed", "320", CVAR_NOTIFY | CVAR_SERVERINFO };
 cvar_t	sv_accelerate = {"sv_accelerate", "10", CVAR_NONE};
+cvar_t	sv_nobhop = { "sv_nobhop", "0", CVAR_NOTIFY | CVAR_SERVERINFO };
+
 void SV_Accelerate (float wishspeed, const vec3_t wishdir)
 {
 	int			i;
 	float		addspeed, accelspeed, currentspeed;
 
-	currentspeed = DotProduct (velocity, wishdir);
+
+	if(sv_nobhop.value)
+	{
+		currentspeed = VectorLength(velocity);
+	}
+	else
+	{
+		currentspeed = DotProduct(velocity, wishdir);
+	}
+
+	//currentspeed = VectorNormalize(velocity);
+
 	addspeed = wishspeed - currentspeed;
 	if (addspeed <= 0)
 		return;
@@ -184,20 +198,24 @@ void SV_Accelerate (float wishspeed, const vec3_t wishdir)
 		velocity[i] += accelspeed*wishdir[i];
 }
 
+cvar_t	sv_airaccelerate = { "sv_airaccelerate", "10", CVAR_NONE };
 void SV_AirAccelerate (float wishspeed, vec3_t wishveloc)
 {
 	int			i;
 	float		addspeed, wishspd, accelspeed, currentspeed;
-
+	//Separate air acceleration values
+	
 	wishspd = VectorNormalize (wishveloc);
 	if (wishspd > 30)
 		wishspd = 30;
+
 	currentspeed = DotProduct (velocity, wishveloc);
 	addspeed = wishspd - currentspeed;
+
 	if (addspeed <= 0)
 		return;
 //	accelspeed = sv_accelerate.value * host_frametime;
-	accelspeed = sv_accelerate.value*wishspeed * host_frametime;
+	accelspeed = sv_airaccelerate.value*wishspeed * host_frametime;
 	if (accelspeed > addspeed)
 		accelspeed = addspeed;
 
@@ -331,52 +349,54 @@ void SV_NoclipMove (void)
 SV_AirMove
 ===================
 */
-void SV_AirMove (void)
+void SV_AirMove(void)
 {
 	int			i;
 	vec3_t		wishvel, wishdir;
 	float		wishspeed;
 	float		fmove, smove;
 
-	AngleVectors (sv_player->v.angles, forward, right, up);
+	AngleVectors(sv_player->v.angles, forward, right, up);
 
 	fmove = cmd.forwardmove;
 	smove = cmd.sidemove;
 
-// hack to not let you back into teleporter
+	// hack to not let you back into teleporter
 	if (qcvm->time < sv_player->v.teleport_time && fmove < 0)
 		fmove = 0;
 
-	for (i=0 ; i<3 ; i++)
-		wishvel[i] = forward[i]*fmove + right[i]*smove;
+	for (i = 0; i < 3; i++)
+		wishvel[i] = forward[i] * fmove + right[i] * smove;
 
-	if ( (int)sv_player->v.movetype != MOVETYPE_WALK)
+	if ((int)sv_player->v.movetype != MOVETYPE_WALK)
 		wishvel[2] = cmd.upmove;
 	else
 		wishvel[2] = 0;
 
-	VectorCopy (wishvel, wishdir);
+	VectorCopy(wishvel, wishdir);
 	wishspeed = VectorNormalize(wishdir);
 	if (wishspeed > sv_maxspeed.value)
 	{
-		VectorScale (wishvel, sv_maxspeed.value/wishspeed, wishvel);
+		VectorScale(wishvel, sv_maxspeed.value / wishspeed, wishvel);
 		wishspeed = sv_maxspeed.value;
 	}
 
-	if ( sv_player->v.movetype == MOVETYPE_NOCLIP)
+	if (sv_player->v.movetype == MOVETYPE_NOCLIP)
 	{	// noclip
-		VectorCopy (wishvel, velocity);
+		VectorCopy(wishvel, velocity);
 	}
-	else if ( onground )
+	else if (onground)
 	{
-		SV_UserFriction ();
-		SV_Accelerate (wishspeed, wishdir);
+		SV_UserFriction();
+		SV_Accelerate(wishspeed, wishdir);
 	}
 	else
 	{	// not on ground, so little effect on velocity
-		SV_AirAccelerate (wishspeed, wishvel);
+		SV_AirAccelerate(wishspeed, wishvel);
 	}
 }
+
+/*
 
 /*
 ===================
@@ -416,7 +436,7 @@ void SV_ClientThink (void)
 	angles[ROLL] = V_CalcRoll (sv_player->v.angles, sv_player->v.velocity)*4;
 	if (!sv_player->v.fixangle)
 	{
-		angles[PITCH] = -v_angle[PITCH]/3;
+		angles[PITCH] = -v_angle[PITCH]/3; //Originally 3
 		angles[YAW] = v_angle[YAW];
 	}
 

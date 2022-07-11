@@ -863,10 +863,10 @@ void IN_MouseMove(usercmd_t *cmd)
 	total_dx = 0;
 	total_dy = 0;
 
-	if ( (in_strafe.state & 1) || (lookstrafe.value && (in_mlook.state & 1) ))
+	if ((in_strafe.state & 1) || (lookstrafe.value && (in_mlook.state & 1)))
 		cmd->sidemove += m_side.value * dmx;
 	else
-		cl.viewangles[YAW] -= m_yaw.value * dmx * cl.csqc_sensitivity;
+		cl.viewangles[YAW] -= CLAMP(-7, m_yaw.value * dmx * cl.csqc_sensitivity,7);
 
 	if (in_mlook.state & 1)
 	{
