@@ -898,10 +898,10 @@ void V_CalcRefdef (void)
 			//FIXME	I_Error ("steptime < 0");
 			steptime = 0;
 
-		oldz += steptime * 80;
+		oldz += steptime * 120; //80
 		if (oldz > ent->origin[2])
 			oldz = ent->origin[2];
-		if (ent->origin[2] - oldz > 12)
+		if (ent->origin[2] - oldz > 12) //12
 			oldz = ent->origin[2] - 12;
 		r_refdef.vieworg[2] += oldz - ent->origin[2];
 		view->origin[2] += oldz - ent->origin[2];

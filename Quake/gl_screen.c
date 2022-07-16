@@ -602,9 +602,7 @@ void ShowSpeed(void)
 			temp_mv[2] = 0;		//Ignore vertical speed... just... ignore it. It's zero. 0. Nihil... Nothing...
 
 			movementspeed = (VectorLength(temp_mv));
-
-			sprintf(st, "%4.0f ups", temp_mv[0]+temp_mv[1]);
-			//sprintf(st, "%4.0f ups sd", temp_mv[1]);
+			sprintf(st, "%4.0f ups", movementspeed);
 
 		}
 		//int movementspeed = 66666;

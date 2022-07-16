@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
+
 edict_t	*sv_player;
 
 extern	cvar_t	sv_friction;
@@ -355,6 +356,7 @@ void SV_AirMove(void)
 	vec3_t		wishvel, wishdir;
 	float		wishspeed;
 	float		fmove, smove;
+	vec3_t		move_vec, input_norm;
 
 	AngleVectors(sv_player->v.angles, forward, right, up);
 
@@ -365,13 +367,22 @@ void SV_AirMove(void)
 	if (qcvm->time < sv_player->v.teleport_time && fmove < 0)
 		fmove = 0;
 
+	move_vec[0] = abs(fmove);
+	move_vec[1] = abs(smove);
+	move_vec[2] = 0;
+
+	VectorNormalize01(move_vec, input_norm);
+
 	for (i = 0; i < 3; i++)
-		wishvel[i] = forward[i] * fmove + right[i] * smove;
+		wishvel[i] = forward[i] * (fmove*input_norm[0]) + right[i] * (smove*input_norm[1]);
+
 
 	if ((int)sv_player->v.movetype != MOVETYPE_WALK)
 		wishvel[2] = cmd.upmove;
 	else
 		wishvel[2] = 0;
+
+
 
 	VectorCopy(wishvel, wishdir);
 	wishspeed = VectorNormalize(wishdir);

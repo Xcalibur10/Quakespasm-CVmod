@@ -388,21 +388,38 @@ vec_t VectorLength(const vec3_t v)
 	return sqrt(DotProduct(v,v));
 }
 
-float VectorNormalize (vec3_t v)
+float VectorNormalize(vec3_t v)
 {
 	float	length, ilength;
 
-	length = sqrt(DotProduct(v,v));
+	length = sqrt(DotProduct(v, v));
 
 	if (length)
 	{
-		ilength = 1/length;
+		ilength = 1 / length;
 		v[0] *= ilength;
 		v[1] *= ilength;
 		v[2] *= ilength;
 	}
 
 	return length;
+}
+void VectorNormalize01(vec3_t in, vec3_t out)
+{
+	float	length, ilength;
+	vec3_t	normalized;
+
+	length = sqrt(DotProduct(in, in));
+
+	out[0] = out[1] = out[2] = 0;
+
+	if (!length == 0)
+	{
+		ilength = 1 / length;
+		out[0] = in[0]*ilength;
+		out[1] = in[1]*ilength;
+		out[2] = in[2]*ilength;
+	}
 }
 
 void VectorInverse (vec3_t v)
