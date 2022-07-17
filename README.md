@@ -14,10 +14,10 @@ Planned changes:
 	/ Per entity texture animation speed changes
 	/ Better chase camera
 	/ More to add...
-
+	
 -Sounds:
 	/ Footstep sounds based on surface types
-
+	
 -Various
 	/ More melee based things
 
