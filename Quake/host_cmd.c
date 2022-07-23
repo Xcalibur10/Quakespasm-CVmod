@@ -1110,6 +1110,12 @@ static void Host_Savegame_f (void)
 	if (cmd_source != src_command)
 		return;
 
+	if (!sv.canmanualsave)
+	{
+		Con_Printf("Manual saving is disabled!\n");
+		return;
+	}
+
 	if (!sv.active)
 	{
 		Con_Printf ("Not playing a local game.\n");

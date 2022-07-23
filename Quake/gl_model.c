@@ -2215,10 +2215,34 @@ void Mod_LoadClipnodes (lump_t *l, qboolean bsp2)
 	loadmodel->clipnodes = out;
 	loadmodel->numclipnodes = count;
 
+	//hull = &loadmodel->hulls[1];
+	//hull->clipnodes = out;
+	//hull->firstclipnode = 0;
+	//hull->lastclipnode = count-1;
+	//hull->planes = loadmodel->planes;
+	//hull->clip_mins[0] = -16;
+	//hull->clip_mins[1] = -16;
+	//hull->clip_mins[2] = -24;
+	//hull->clip_maxs[0] = 16;
+	//hull->clip_maxs[1] = 16;
+	//hull->clip_maxs[2] = 32;
+
+	//hull = &loadmodel->hulls[2];
+	//hull->clipnodes = out;
+	//hull->firstclipnode = 0;
+	//hull->lastclipnode = count-1;
+	//hull->planes = loadmodel->planes;
+	//hull->clip_mins[0] = -32;
+	//hull->clip_mins[1] = -32;
+	//hull->clip_mins[2] = -24;
+	//hull->clip_maxs[0] = 32;
+	//hull->clip_maxs[1] = 32;
+	//hull->clip_maxs[2] = 64;
+
 	hull = &loadmodel->hulls[1];
 	hull->clipnodes = out;
 	hull->firstclipnode = 0;
-	hull->lastclipnode = count-1;
+	hull->lastclipnode = count - 1;
 	hull->planes = loadmodel->planes;
 	hull->clip_mins[0] = -16;
 	hull->clip_mins[1] = -16;
@@ -2230,7 +2254,7 @@ void Mod_LoadClipnodes (lump_t *l, qboolean bsp2)
 	hull = &loadmodel->hulls[2];
 	hull->clipnodes = out;
 	hull->firstclipnode = 0;
-	hull->lastclipnode = count-1;
+	hull->lastclipnode = count - 1;
 	hull->planes = loadmodel->planes;
 	hull->clip_mins[0] = -32;
 	hull->clip_mins[1] = -32;
@@ -2238,6 +2262,19 @@ void Mod_LoadClipnodes (lump_t *l, qboolean bsp2)
 	hull->clip_maxs[0] = 32;
 	hull->clip_maxs[1] = 32;
 	hull->clip_maxs[2] = 64;
+
+	hull = &loadmodel->hulls[3];
+	hull->clipnodes = out;
+	hull->firstclipnode = 0;
+	hull->lastclipnode = count - 1;
+	hull->planes = loadmodel->planes;
+	hull->clip_mins[0] = -16;
+	hull->clip_mins[1] = -16;
+	hull->clip_mins[2] = -24;
+	hull->clip_maxs[0] = 16;
+	hull->clip_maxs[1] = 16;
+	hull->clip_maxs[2] = 8;
+
 
 	if (bsp2)
 	{
@@ -2335,6 +2372,14 @@ void Mod_MakeHull0 (void)
 		loadmodel->hulls[2].clipnodes = loadmodel->hulls[1].clipnodes;
 		loadmodel->hulls[2].firstclipnode = loadmodel->hulls[1].firstclipnode;
 		loadmodel->hulls[2].lastclipnode = loadmodel->hulls[1].lastclipnode;
+	}
+	if (!loadmodel->hulls[3].clipnodes) //added JoeyAP (extra hull)
+	{
+		loadmodel->hulls[3].clip_maxs[2] -= loadmodel->hulls[3].clip_mins[2];
+		loadmodel->hulls[3].clip_mins[2] = 0;
+		loadmodel->hulls[3].clipnodes = loadmodel->hulls[2].clipnodes;
+		loadmodel->hulls[3].firstclipnode = loadmodel->hulls[2].firstclipnode;
+		loadmodel->hulls[3].lastclipnode = loadmodel->hulls[2].lastclipnode;
 	}
 }
 
@@ -2610,6 +2655,7 @@ void Mod_BoundsFromClipNode (qmodel_t *mod, int hull, int nodenum)
 
 	Mod_BoundsFromClipNode (mod, hull, node->children[0]);
 	Mod_BoundsFromClipNode (mod, hull, node->children[1]);
+	//Mod_BoundsFromClipNode (mod, hull, node->children[2]); //No idea, what this do exactly... (JoeyAP)
 }
 
 /* EXTERNAL VIS FILE SUPPORT:

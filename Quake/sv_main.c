@@ -1484,6 +1484,8 @@ void SV_Init (void)
 	extern	cvar_t	sv_sound_watersplash;	//spike - making these changable is handy...
 	extern	cvar_t	sv_sound_land;			//spike - and also mutable...
 
+	//extern	cvar_t	sv_allowmanualsave;		//JoeyAP - enables / disables manual saving
+
 
 	Cvar_RegisterVariable (&sv_maxvelocity);
 	Cvar_RegisterVariable (&sv_gravity);
@@ -1516,6 +1518,9 @@ void SV_Init (void)
 
 	Cvar_RegisterVariable (&sv_sound_watersplash); //spike
 	Cvar_RegisterVariable (&sv_sound_land); //spike
+
+	//Cvar_RegisterVariable(&sv_allowmanualsave); //JoeyAP
+	//Cvar_SetCallback(&sv_allowmanualsave, Host_Callback_Notify);
 
 	if (isDedicated)
 		sv_public.string = "1";

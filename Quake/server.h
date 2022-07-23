@@ -43,6 +43,8 @@ typedef enum {ss_loading, ss_active} server_state_t;
 typedef struct
 {
 	qboolean	active;				// false if only a net client
+	qboolean	canmanualsave;			// true if you are allowed to save manually
+
 
 	qboolean	paused;
 	qboolean	loadgame;			// handle connections specially
