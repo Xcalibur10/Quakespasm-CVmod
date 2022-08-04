@@ -447,7 +447,7 @@ void SV_ClientThink (void)
 	angles[ROLL] = V_CalcRoll (sv_player->v.angles, sv_player->v.velocity)*4;
 	if (!sv_player->v.fixangle)
 	{
-		angles[PITCH] = -v_angle[PITCH]/3; //Originally 3
+		angles[PITCH] = -v_angle[PITCH]/3; //Originally 3... WTF is going on here exactly?
 		angles[YAW] = v_angle[YAW];
 	}
 

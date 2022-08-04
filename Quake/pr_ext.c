@@ -7120,6 +7120,22 @@ static void PF_ex_localsound (void)
 	SV_LocalSound (&svs.clients[entnum-1], sample);
 }
 
+//NEW EXTENSIONS
+
+static void PF_cl_turnlimit(void)
+{
+	//edict_t *ent;
+	float	limit;
+	limit = G_FLOAT(OFS_PARM0);
+	cl.turnspeedlimit = limit;
+
+	return limit;
+
+}
+
+
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 //A quick note on number ranges.
 //0: automatically assigned. more complicated, but no conflicts over numbers, just names...
 //   NOTE: #0 is potentially ambiguous - vanilla will interpret it as instruction 0 (which is normally reserved) rather than a builtin.
@@ -7569,6 +7585,8 @@ static struct
 	{"getbindmaps",		PF_NoSSQC,			PF_cl_getbindmaps,			631,	PF_cl_getbindmaps,631, "vector()", "stub."},
 	{"setbindmaps",		PF_NoSSQC,			PF_cl_setbindmaps,			632,	PF_cl_setbindmaps,632, "float(vector bm)", "stub."},
 	{"digest_hex",		PF_digest_hex,		PF_digest_hex,				639,	PF_digest_hex, 639, "string(string digest, string data, ...)"},
+	//NEW EXTENSIONS STARTING FROM 1000
+	{ "setturnlimit",		PF_cl_turnlimit,	PF_cl_turnlimit,			1000,	PF_cl_turnlimit, 1000, "void(float limit)" },
 };
 
 qboolean PR_Can_Particles(unsigned int prot, unsigned int pext1, unsigned int pext2)

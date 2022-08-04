@@ -855,10 +855,12 @@ void IN_JoyMove (usercmd_t *cmd)
 
 void IN_MouseMove(usercmd_t *cmd)
 {
-	float	dmx, dmy;
+	float	dmx, dmy, limit;
 
 	dmx = total_dx * sensitivity.value;
 	dmy = total_dy * sensitivity.value;
+
+	limit = cl.turnspeedlimit;
 
 	total_dx = 0;
 	total_dy = 0;
@@ -866,7 +868,7 @@ void IN_MouseMove(usercmd_t *cmd)
 	if ((in_strafe.state & 1) || (lookstrafe.value && (in_mlook.state & 1)))
 		cmd->sidemove += m_side.value * dmx;
 	else
-		cl.viewangles[YAW] -= CLAMP(-7, m_yaw.value * dmx * cl.csqc_sensitivity,7);
+		cl.viewangles[YAW] -= CLAMP(-limit, m_yaw.value * dmx * cl.csqc_sensitivity, limit); //modified by JoeyAP (added clamping)
 
 	if (in_mlook.state & 1)
 	{

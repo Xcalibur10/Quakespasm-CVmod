@@ -117,7 +117,7 @@ void R_RenderDlight (dlight_t *light)
 	vec3_t	v;
 	float	rad;
 
-	rad = light->radius * 0.35;
+	rad = light->radius * 0.15; //0.35
 
 	VectorSubtract (light->origin, r_origin, v);
 	if (VectorLength (v) < rad)

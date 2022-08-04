@@ -702,6 +702,54 @@ static void PF_sound (void)
 	SV_StartSound2 (entity, NULL, channel, sample, volume, attenuation, rate, flags, offset);
 }
 
+static void PF_sound2(void)
+{
+	const char* sample;
+	int		channel;
+	edict_t* entity;
+	int		volume;
+	float	attenuation;
+	float	rate;
+	unsigned int flags;
+	float	offset;
+
+	entity = G_EDICT(OFS_PARM0);
+	channel = G_FLOAT(OFS_PARM1);
+	sample = G_STRING(OFS_PARM2);
+	volume = G_FLOAT(OFS_PARM3) * 255;
+	attenuation = G_FLOAT(OFS_PARM4);
+	rate = G_FLOAT(OFS_PARM5);
+
+	//rate = (qcvm->argc < 6) ? 1 : (G_FLOAT(OFS_PARM5) / 100);
+	flags = (qcvm->argc < 7) ? 0 : G_FLOAT(OFS_PARM6);
+	offset = (qcvm->argc < 8) ? 0 : G_FLOAT(OFS_PARM7);
+
+	if (!*sample)
+	{
+		PR_RunWarning("PF_sound: empty string\n");
+		return;
+	}
+
+	if (rate && rate != 1)
+		Con_DPrintf("sound() rate scaling is not supported\n");
+	if (flags)
+		Con_DPrintf("sound() flags %#x not supported\n", flags);
+	if (offset)
+		Con_DPrintf("sound() time offsets are not supported\n");
+
+	/*	Spike -- these checks are redundant
+		if (volume < 0 || volume > 255)
+			Host_Error ("SV_StartSound: volume = %i", volume);
+
+		if (attenuation < 0 || attenuation > 4)
+			Host_Error ("SV_StartSound: attenuation = %f", attenuation);
+
+		if (channel < 0 || channel > 7)
+			Host_Error ("SV_StartSound: channel = %i", channel);
+	*/
+	SV_StartSound2(entity, NULL, channel, sample, volume, attenuation, rate, flags, offset);
+}
+
 /*
 =================
 PF_break

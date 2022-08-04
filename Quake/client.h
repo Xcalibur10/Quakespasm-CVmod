@@ -259,6 +259,8 @@ typedef struct
 	unsigned	protocol_pext2;	//spike -- flag of fte protocol extensions
 	qboolean	protocol_dpdownload;
 
+	float		turnspeedlimit;
+
 #ifdef PSET_SCRIPT
 	qboolean	protocol_particles;
 	struct

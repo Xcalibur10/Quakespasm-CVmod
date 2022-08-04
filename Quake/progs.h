@@ -49,6 +49,7 @@ typedef struct edict_s
 	unsigned char	alpha;			/* johnfitz -- hack to support alpha since it's not part of entvars_t */
 	qboolean	sendinterval;		/* johnfitz -- send time until nextthink to client for better lerp timing */
 	qboolean	onladder;			/* spike -- content_ladder stuff */
+	float		turnspeedlimit;		/* JoeyAP -- added support for limiting turning speed. No more spinning allowed by high mouse speed and sensitivity...*/
 
 	float		freetime;		/* sv.time when the object was freed */
 	entvars_t	v;			/* C exported fields from progs */

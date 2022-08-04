@@ -27,6 +27,7 @@ cvar_t	chase_back = {"chase_back", "100", CVAR_NONE};
 cvar_t	chase_up = {"chase_up", "16", CVAR_NONE};
 cvar_t	chase_right = {"chase_right", "0", CVAR_NONE};
 cvar_t	chase_active = {"chase_active", "0", CVAR_NONE};
+cvar_t	chase_smoothing = { "chase_smoothing", "2", CVAR_NONE };
 
 /*
 ==============
@@ -39,6 +40,7 @@ void Chase_Init (void)
 	Cvar_RegisterVariable (&chase_up);
 	Cvar_RegisterVariable (&chase_right);
 	Cvar_RegisterVariable (&chase_active);
+	Cvar_RegisterVariable(&chase_smoothing);
 }
 
 /*
@@ -81,7 +83,7 @@ Chase_UpdateForDrawing -- johnfitz -- orient camera based on client. called befo
 TODO: stay at least 8 units away from all walls in this leaf
 ==============
 */
-void Chase_UpdateForDrawing (void)
+void Chase_UpdateForDrawing(void)
 {
 	int		i;
 	vec3_t	forward, up, right;
@@ -92,28 +94,39 @@ void Chase_UpdateForDrawing (void)
 	test_angles[1] = 0;
 	test_angles[2] = 0;
 
-	AngleVectors (r_refdef.viewangles, forward, right, up);
+	AngleVectors(r_refdef.viewangles, forward, right, up);
 	//AngleVectors(test_angles, forward, right, up);
 
 	// calc ideal camera location before checking for walls
-	for (i=0 ; i<3 ; i++)
+	for (i = 0; i < 3; i++)
 		ideal[i] = cl.viewent.origin[i]
-		- forward[i]*(chase_back.value)
-		+ right[i]*chase_right.value;
-		//+ up[i]*chase_up.value;
+		- forward[i] * (chase_back.value)
+		+ right[i] * chase_right.value;
+	//+ up[i]*chase_up.value;
 	ideal[2] = cl.viewent.origin[2] + chase_up.value;
+
+	//ideal[0] -= forward[0] * 20;
+	//ideal[1] -= forward[1] * 20;
 
 	// make sure camera is not in or behind a wall
 	TraceLine(r_refdef.vieworg, ideal, temp);
+
+
+
 	if (VectorLength(temp) != 0)
 		VectorCopy(temp, ideal);
 
+	ideal[0] += forward[0] * 32;
+	ideal[1] += forward[1] * 32;
+
 	// place camera
-	VectorCopy (ideal, r_refdef.vieworg);
+	VectorCopy(ideal, r_refdef.vieworg);
 
 	// find the spot the player is looking at
-	VectorMA (cl.viewent.origin, 4096, forward, temp);
-	TraceLine (cl.viewent.origin, temp, crosshair);
+	VectorMA(cl.viewent.origin, 4096, forward, temp);
+	TraceLine(cl.viewent.origin, temp, crosshair);
+
+	//r_refdef.viewangles[YAW] = 0;
 
 	// calculate camera angles to look at the same spot
 	VectorSubtract (crosshair, r_refdef.vieworg, temp);
@@ -124,3 +137,53 @@ void Chase_UpdateForDrawing (void)
 	}
 }
 
+/*
+==============
+Chase_UpdateForDrawing -- johnfitz -- orient camera based on client. called before drawing
+
+TODO: stay at least 8 units away from all walls in this leaf
+==============
+*/
+void Chase_UpdateForDrawing2(void)
+{
+	int		i;
+	vec3_t	forward, up, right;
+	vec3_t	ideal, crosshair, temp;
+	vec3_t	spot2;
+	vec3_t	dir;
+	/*
+	spot2[0] = // = self.owner.origin - (v_forward * 30) + (v_right * 0) + '0 0 14';
+	spot2[1] =
+	spot2[2] =*/
+
+	AngleVectors(r_refdef.viewangles, forward, right, up);
+	//AngleVectors(test_angles, forward, right, up);
+
+	// calc ideal camera location before checking for walls
+	for (i = 0; i < 3; i++)
+		ideal[i] = cl.viewent.origin[i]
+		- forward[i] * (chase_back.value)
+		+ right[i] * chase_right.value;
+	//+ up[i]*chase_up.value;
+	ideal[2] = cl.viewent.origin[2] + chase_up.value;
+
+	// make sure camera is not in or behind a wall
+	TraceLine(r_refdef.vieworg, ideal, temp);
+	if (VectorLength(temp) != 0)
+		VectorCopy(temp, ideal);
+
+	// place camera
+	VectorCopy(ideal, r_refdef.vieworg);
+
+	// find the spot the player is looking at
+	VectorMA(cl.viewent.origin, 4096, forward, temp);
+	TraceLine(cl.viewent.origin, temp, crosshair);
+
+	// calculate camera angles to look at the same spot
+	VectorSubtract(crosshair, r_refdef.vieworg, temp);
+	VectorAngles(temp, NULL, r_refdef.viewangles);
+	if (r_refdef.viewangles[PITCH] == 90 || r_refdef.viewangles[PITCH] == -90)
+	{
+		r_refdef.viewangles[YAW] = cl.viewangles[YAW];
+	}
+}

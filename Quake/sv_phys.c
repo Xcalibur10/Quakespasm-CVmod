@@ -316,7 +316,7 @@ int SV_FlyMove (edict_t *ent, float time, trace_t *steptrace)
 		if (!trace.ent)
 			Sys_Error ("SV_FlyMove: !trace.ent");
 
-		if (trace.plane.normal[2] > 0.7)
+		if (trace.plane.normal[2] > 0.7) //0.7 originally
 		{
 			blocked |= 1;		// floor
 			if (trace.ent->v.solid == SOLID_BSP)
@@ -1004,7 +1004,7 @@ void SV_WallFriction (edict_t *ent, trace_t *trace)
 	AngleVectors (ent->v.v_angle, forward, right, up);
 	d = DotProduct (trace->plane.normal, forward);
 
-	d += 0.5;
+	d += 0.3; //0.5 originally -- JoeyAP
 	if (d >= 0)
 		return;
 
@@ -1085,7 +1085,7 @@ SV_WalkMove
 Only used by players
 ======================
 */
-#define	STEPSIZE	18
+#define	STEPSIZE	18 //18 originally
 void SV_WalkMove (edict_t *ent)
 {
 	vec3_t		upmove, downmove;
@@ -1155,13 +1155,13 @@ void SV_WalkMove (edict_t *ent)
 	}
 
 // extra friction based on view angle
-	if ( clip & 2 )
-		SV_WallFriction (ent, &steptrace);
+	if (clip & 2)
+		SV_WallFriction (ent, &steptrace); //IS THIS REALLY NECESSARY? YES
 
 // move down
 	downtrace = SV_PushEntity (ent, downmove);	// FIXME: don't link?
 
-	if (downtrace.plane.normal[2] > 0.7)
+	if (downtrace.plane.normal[2] > 0.7) //0.7 originally
 	{
 		if (ent->v.solid == SOLID_BSP)
 		{

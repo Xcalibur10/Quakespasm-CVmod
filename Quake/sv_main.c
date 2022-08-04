@@ -1680,7 +1680,8 @@ void SV_StartSound2 (edict_t *entity, float *origin, int channel, const char *sa
 	if (flags & CF_FOLLOW)			field_mask |= SND_FTE_FOLLOW;
 	if (flags & CF_NOREPLACE)		field_mask |= SND_FTE_NOREPLACE;
 	if (flags & CF_SENDVELOCITY)	field_mask |= SND_FTE_VELOCITY;
-	if (speed && speed != 1)		field_mask |= SND_FTE_PITCHADJ;
+	//if (speed && speed != 1)		field_mask |= SND_FTE_PITCHADJ;
+	if (speed != 1)		field_mask |= SND_FTE_PITCHADJ;
 	if (timeoffset)					field_mask |= SND_FTE_TIMEOFS;
 	//
 
