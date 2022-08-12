@@ -1,0 +1,37 @@
+﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(499,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
+  Generating code
+  Previous IPDB and IOBJ mismatch, fall back to full compilation.
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\pr_ext.c(3903): warning C4700: uninitialized local variable 'ent' used
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\pr_ext.c(3959): warning C4700: uninitialized local variable 'ent' used
+D:\Documents\GitHub\Quakespasm-CVmod\Quake\pr_ext.c(3847): warning C4700: uninitialized local variable 'ent' used
+  All 2488 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  quakespasm-sdl2.vcxproj -> D:\Games\GOG Games\Quake\Quakespasm-Spiked-sdl2_mod.exe
+  D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\codecs\x64\libFLAC-8.dll
+  The process cannot access the file because it is being used by another process.
+  D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\codecs\x64\libmad-0.dll
+  The process cannot access the file because it is being used by another process.
+  D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\codecs\x64\libmikmod-3.dll
+  The process cannot access the file because it is being used by another process.
+  D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\codecs\x64\libmpg123-0.dll
+  D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\codecs\x64\libogg-0.dll
+  The process cannot access the file because it is being used by another process.
+  D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\codecs\x64\libopus-0.dll
+  The process cannot access the file because it is being used by another process.
+  D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\codecs\x64\libopusfile-0.dll
+  The process cannot access the file because it is being used by another process.
+  D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\codecs\x64\libvorbis-0.dll
+  The process cannot access the file because it is being used by another process.
+  D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\codecs\x64\libvorbisfile-3.dll
+  The process cannot access the file because it is being used by another process.
+  D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\codecs\x64\libxmp.dll
+          2 file(s) copied.
+  D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\SDL2\lib64\SDL2.dll
+  The process cannot access the file because it is being used by another process.
+          0 file(s) copied.
+  The system cannot find the file specified.
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppCommon.targets(155,5): error MSB3073: The command "copy "D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\codecs\x64\*.dll" "D:\Games\GOG Games\Quake\"
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppCommon.targets(155,5): error MSB3073: copy "D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\SDL2\lib64\*.dll" "D:\Games\GOG Games\Quake\"
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppCommon.targets(155,5): error MSB3073: copy "D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\Build-quakespasm-sdl2\x64\Release\Quakespasm-Spiked-sdl2-CV.exe" "D:\Games\GOG Games\Quake\\..\..\..\..\..\.."
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppCommon.targets(155,5): error MSB3073: 
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppCommon.targets(155,5): error MSB3073: :VCEnd" exited with code 1.

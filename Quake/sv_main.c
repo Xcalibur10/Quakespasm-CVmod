@@ -1468,8 +1468,9 @@ void SV_Init (void)
 	extern	cvar_t	sv_friction;
 	extern	cvar_t	sv_edgefriction;
 	extern	cvar_t	sv_stopspeed;
-	extern	cvar_t	sv_maxspeed;
-	extern	cvar_t	sv_maxsidespeed;
+	extern	cvar_t	sv_maxspeed;	//max speed (or max forward speed) - JoeyAP
+	extern	cvar_t	sv_maxsidespeed;	//max speed (or max side speed) - JoeyAP
+	extern	cvar_t	sv_maxbackspeed;	//max speed (or max backwards speed) - JoeyAP
 	extern	cvar_t	sv_accelerate;
 	extern	cvar_t	sv_airaccelerate;
 	extern	cvar_t	sv_nobhop;
@@ -1499,6 +1500,9 @@ void SV_Init (void)
 
 	Cvar_RegisterVariable(&sv_maxsidespeed);
 	Cvar_SetCallback(&sv_maxsidespeed, Host_Callback_Notify);
+
+	//Cvar_RegisterVariable(&sv_maxbackspeed);
+	//Cvar_SetCallback(&sv_maxbackspeed, Host_Callback_Notify);
 
 	Cvar_RegisterVariable (&sv_accelerate);
 

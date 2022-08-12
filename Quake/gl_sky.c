@@ -1200,7 +1200,7 @@ void Sky_DrawSky (void)
 	if (!r_fastsky.value && !(Fog_GetDensity() > 0 && skyfog >= 1))
 	{
 		glDepthFunc(GL_GEQUAL);
-		glDepthMask(0);
+		glDepthMask(1);		//modified from 0... was it a good idea? Well, it makes Reshade ambient occlusion shaders work nicely. No more black spots in the sky. I wonder what I broke with it...
 
 		if (skybox_name[0])
 			Sky_DrawSkyBox ();

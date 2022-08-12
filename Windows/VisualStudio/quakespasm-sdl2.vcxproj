@@ -82,10 +82,10 @@
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>$(SolutionDir)Build-$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <OutDir>..\..\..\..\..\Games\GOG Games\Quake</OutDir>
     <IntDir>Build-$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>Quakespasm-Spiked-sdl2-CV</TargetName>
+    <TargetName>Quakespasm-Spiked-sdl2_mod</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

@@ -90,12 +90,8 @@ void Chase_UpdateForDrawing(void)
 	vec3_t	ideal, crosshair, temp;
 	vec3_t	test_angles;
 
-	test_angles[0] = 1;
-	test_angles[1] = 0;
-	test_angles[2] = 0;
 
 	AngleVectors(r_refdef.viewangles, forward, right, up);
-	//AngleVectors(test_angles, forward, right, up);
 
 	// calc ideal camera location before checking for walls
 	for (i = 0; i < 3; i++)
@@ -105,13 +101,8 @@ void Chase_UpdateForDrawing(void)
 	//+ up[i]*chase_up.value;
 	ideal[2] = cl.viewent.origin[2] + chase_up.value;
 
-	//ideal[0] -= forward[0] * 20;
-	//ideal[1] -= forward[1] * 20;
-
 	// make sure camera is not in or behind a wall
 	TraceLine(r_refdef.vieworg, ideal, temp);
-
-
 
 	if (VectorLength(temp) != 0)
 		VectorCopy(temp, ideal);
@@ -121,6 +112,9 @@ void Chase_UpdateForDrawing(void)
 
 	// place camera
 	VectorCopy(ideal, r_refdef.vieworg);
+
+	temp[0] -= forward[0] * 32;
+	temp[1] -= forward[1] * 32;
 
 	// find the spot the player is looking at
 	VectorMA(cl.viewent.origin, 4096, forward, temp);
@@ -151,13 +145,9 @@ void Chase_UpdateForDrawing2(void)
 	vec3_t	ideal, crosshair, temp;
 	vec3_t	spot2;
 	vec3_t	dir;
-	/*
-	spot2[0] = // = self.owner.origin - (v_forward * 30) + (v_right * 0) + '0 0 14';
-	spot2[1] =
-	spot2[2] =*/
+
 
 	AngleVectors(r_refdef.viewangles, forward, right, up);
-	//AngleVectors(test_angles, forward, right, up);
 
 	// calc ideal camera location before checking for walls
 	for (i = 0; i < 3; i++)

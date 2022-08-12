@@ -355,6 +355,7 @@ void SV_AirMove(void)
 	int			i;
 	vec3_t		wishvel, wishdir;
 	float		wishspeed;
+	vec3_t		wish_vec;
 	float		fmove, smove;
 	vec3_t		move_vec, input_norm;
 

@@ -959,7 +959,7 @@ void GL_SetCanvas (canvastype newcanvas)
 		glOrtho (0, 320, 200, 0, -99999, 99999);
 		glViewport (glx+glwidth-320*s, gly, 320*s, 200*s);
 		break;
-	case CANVAS_CENTER: //added by Adam Pajor
+	case CANVAS_CENTER: //added by JoeyAP
 		s = (float)glwidth / vid.conwidth; //use console scale
 		glOrtho(scr_vrect.width / -2 / s, scr_vrect.width / 2 / s, scr_vrect.height / 2 / s, scr_vrect.height / -2 / s, -99999, 99999);
 		glViewport(scr_vrect.x, glheight - scr_vrect.y - scr_vrect.height, scr_vrect.width & ~1, scr_vrect.height & ~1);

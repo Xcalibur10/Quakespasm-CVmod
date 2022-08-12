@@ -811,7 +811,7 @@ void V_CalcRefdef (void)
 	r_refdef.vieworg[1] += 1.0/32;
 	r_refdef.vieworg[2] += 1.0/32;
 
-	VectorCopy (cl.viewangles, r_refdef.viewangles);
+	//VectorCopy (cl.viewangles, r_refdef.viewangles);
 	//r_refdef.viewangles[1] = 0; //FIX CAMERA! REMOVE LATER
 	
 	
@@ -909,8 +909,10 @@ void V_CalcRefdef (void)
 	else
 		oldz = ent->origin[2];
 
-	if (chase_active.value)
+	if (chase_active.value==1)
 		Chase_UpdateForDrawing (); //johnfitz
+	else if (chase_active.value>=2)
+		Chase_UpdateForDrawing2();
 }
 
 /*

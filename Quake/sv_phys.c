@@ -1004,7 +1004,7 @@ void SV_WallFriction (edict_t *ent, trace_t *trace)
 	AngleVectors (ent->v.v_angle, forward, right, up);
 	d = DotProduct (trace->plane.normal, forward);
 
-	d += 0.3; //0.5 originally -- JoeyAP
+	d += 0.5; //0.5 originally -- JoeyAP
 	if (d >= 0)
 		return;
 
