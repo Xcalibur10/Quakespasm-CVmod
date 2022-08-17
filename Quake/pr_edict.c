@@ -1173,6 +1173,8 @@ static void PR_MergeEngineFieldDefs (void)
 		//{"glowmod",		ev_vector},	//fullbright tints
 		//{"fatness",		ev_float},	//bloated rendering...
 		//{"gravitydir",	ev_vector},	//says which direction gravity should act for this ent...
+		{"texspeed",		ev_float},	//texture animation speed
+		{"maxturnspeed",	ev_float},	//maximum turn speed for entity... or something... like that.
 
 	};
 	int maxofs = qcvm->progs->entityfields;

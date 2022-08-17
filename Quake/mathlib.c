@@ -884,3 +884,69 @@ void Matrix4_ProjectionMatrix(float fovx, float fovy, float neard, float fard, q
 	out[11] = -1;
 	out[15] = 0;
 }
+
+//Just a sign function... because I needed that
+float Sign(float num)
+{
+	if (num < 0) return -1;
+	else
+	if (num > 0) return 1;
+		else return 0;
+
+}
+
+float Lerp(float a, float b, float t)
+{
+	return a + t * (b - a);
+}
+
+float Repeat(float t, float m)
+{
+	return CLAMP(0,t - floor(t / m) * m, m);
+}
+
+float LerpTheta(float a, float b, float t)
+{
+	const dt = Repeat(b - a, 360);
+	return Lerp(a, a + (dt > 180 ? dt - 360 : dt), t);
+}
+
+//LerpDegrees(start, end, amount);
+float LerpDegrees(float start, float end, float amount) 
+{
+	float difference = abs(end - start);
+	if (difference > 180)
+	{
+		// We need to add on to one of the values.
+		if (end > start)
+		{
+			// We'll add it on to start...
+			start += 360;
+		}
+		else
+		{
+			// Add it on to end.
+			end += 360;
+		}
+	}
+
+	// Interpolate it.
+	float value = (start + ((end - start) * amount));
+
+	// Wrap it..
+	float rangeZero = 360;
+
+	if (value >= 0 && value <= 360)
+		return value;
+
+	float vmodrz = fmod(value,rangeZero);
+
+	return vmodrz;
+}
+
+float LerpAngle(from, to, weight)
+{
+	float difference = fmod(to - from, 2 * M_PI);
+	float distance = fmod(2.0 * difference, 2 * M_PI) - difference;
+	return from + distance * weight;
+}

@@ -167,7 +167,8 @@ SV_Accelerate
 ==============
 */
 cvar_t	sv_maxspeed = {"sv_maxspeed", "320", CVAR_NOTIFY|CVAR_SERVERINFO};
-cvar_t	sv_maxsidespeed = { "sv_maxsidespeed", "320", CVAR_NOTIFY | CVAR_SERVERINFO };
+cvar_t	sv_maxsidespeed = { "sv_maxsidespeed", "220", CVAR_NOTIFY | CVAR_SERVERINFO };
+cvar_t	sv_maxbackspeed = { "sv_maxspeed", "220", CVAR_NOTIFY | CVAR_SERVERINFO };
 cvar_t	sv_accelerate = {"sv_accelerate", "10", CVAR_NONE};
 cvar_t	sv_nobhop = { "sv_nobhop", "0", CVAR_NOTIFY | CVAR_SERVERINFO };
 
@@ -199,7 +200,7 @@ void SV_Accelerate (float wishspeed, const vec3_t wishdir)
 		velocity[i] += accelspeed*wishdir[i];
 }
 
-cvar_t	sv_airaccelerate = { "sv_airaccelerate", "10", CVAR_NONE };
+cvar_t	sv_airaccelerate = { "sv_airaccelerate", "2", CVAR_NONE };
 void SV_AirAccelerate (float wishspeed, vec3_t wishveloc)
 {
 	int			i;
@@ -215,7 +216,6 @@ void SV_AirAccelerate (float wishspeed, vec3_t wishveloc)
 
 	if (addspeed <= 0)
 		return;
-//	accelspeed = sv_accelerate.value * host_frametime;
 	accelspeed = sv_airaccelerate.value*wishspeed * host_frametime;
 	if (accelspeed > addspeed)
 		accelspeed = addspeed;
@@ -254,8 +254,10 @@ void SV_WaterMove (void)
 //
 	AngleVectors (sv_player->v.v_angle, forward, right, up);
 
-	for (i=0 ; i<3 ; i++)
-		wishvel[i] = forward[i]*cmd.forwardmove + right[i]*cmd.sidemove;
+	for (i = 0; i < 3; i++)
+	{
+		wishvel[i] = forward[i] * cmd.forwardmove + right[i] * cmd.sidemove;
+	}
 
 	if (sv_player->onladder)
 	{
@@ -355,7 +357,7 @@ void SV_AirMove(void)
 	int			i;
 	vec3_t		wishvel, wishdir;
 	float		wishspeed;
-	vec3_t		wish_vec;
+	vec3_t		wish_vec;	//JoeyAP - wish velocity using max forward, backward and sideway speeds
 	float		fmove, smove;
 	vec3_t		move_vec, input_norm;
 
@@ -363,6 +365,7 @@ void SV_AirMove(void)
 
 	fmove = cmd.forwardmove;
 	smove = cmd.sidemove;
+
 
 	// hack to not let you back into teleporter
 	if (qcvm->time < sv_player->v.teleport_time && fmove < 0)

@@ -1266,8 +1266,16 @@ void CL_SendCmd (void)
 	if (cls.state != ca_connected)
 		return;
 
+	//CL_BaseMove(&cmd);
 	// get basic movement from keyboard
-	CL_BaseMove (&cmd);
+	if (chase_active.value <= 1)
+	{
+		CL_BaseMove(&cmd);
+	}
+	else
+	{
+		CL_BaseMoveOrbit(&cmd);
+	}
 
 	// allow mice or other external controllers to add to the move
 	cmd.forwardmove	+= cl.pendingcmd.forwardmove;

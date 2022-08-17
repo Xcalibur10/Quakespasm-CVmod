@@ -59,6 +59,8 @@ kbutton_t	in_up, in_down;
 
 int			in_impulse;
 
+
+
 // JPG 1.05 - translate +jump to +moveup under water
 //extern cvar_t	pq_moveup;
 
@@ -353,6 +355,7 @@ void CL_AdjustAngles (void)
 		cl.viewangles[YAW] += speed*cl_yawspeed.value*CL_KeyState (&in_left);
 		cl.viewangles[YAW] = anglemod(cl.viewangles[YAW]);
 	}
+
 	if (in_klook.state & 1)
 	{
 		V_StopPitchDrift ();
@@ -382,6 +385,13 @@ void CL_AdjustAngles (void)
 		cl.viewangles[ROLL] = -50;
 }
 
+
+vec3_t		in_dir_smoothed;	//Smoothed input direction vector
+vec3_t		in_dir_last;		//Input direction vector one frame before
+vec3_t		in_dir;				//Input direction vector
+float		last_yaw;
+vec3_t		final_dir;
+
 /*
 ================
 CL_BaseMove
@@ -393,6 +403,7 @@ void CL_BaseMove (usercmd_t *cmd)
 {
 	Q_memset (cmd, 0, sizeof(*cmd));
 
+	last_yaw = cl.viewangles[YAW];
 	VectorCopy(cl.viewangles, cmd->viewangles);
 
 	if (cls.signon != SIGNONS)
@@ -419,6 +430,148 @@ void CL_BaseMove (usercmd_t *cmd)
 //
 // adjust for speed key
 //
+	if ((in_speed.state & 1) ^ (cl_alwaysrun.value != 0.0))
+	{
+		cmd->forwardmove *= cl_movespeedkey.value;
+		cmd->sidemove *= cl_movespeedkey.value;
+		cmd->upmove *= cl_movespeedkey.value;
+	}
+}
+
+
+
+/*
+================
+CL_BaseMoveOrbit
+
+Send the intended movement message to the server
+================
+*/
+void CL_BaseMoveOrbit(usercmd_t* cmd)
+{
+	Q_memset(cmd, 0, sizeof(*cmd));
+
+	//Don't dance on the floor while dead!!!
+	if (cl.stats[STAT_HEALTH] <= 0)
+	{
+		return;
+	}
+
+	float cl_yaw = anglemod(cl.viewangles[YAW]);
+	float rd_yaw = anglemod(r_refdef.viewangles[YAW]);
+	rd_yaw = (rd_yaw-180) * (2 * M_PI / 360); //To radian... 
+
+
+
+
+	float n_yaw = 0;
+
+	vec3_t cam_dir; //Camera direction vector
+	vec3_t cam_forward; //Camera forward vector
+	vec3_t cam_right;
+	vec3_t cam_up;
+
+	for (int i = 0; i <= 2; i++)
+	{
+		cam_dir[i] = r_refdef.viewangles[i];
+	}
+
+
+	float ang; //Angle between camera and player
+
+
+	//ang = cam_dir[YAW] * (M_PI * 2 / 360);
+	AngleVectors(cam_dir, cam_forward, cam_right, cam_up);
+
+	//cam_fwd[0] = sin(ang);
+	//cam_fwd[1] = cos(ang);
+	//cam_fwd[2] = 0;
+
+	in_dir[0] = CL_KeyState(&in_back) - CL_KeyState(&in_forward);
+	in_dir[1] = CL_KeyState(&in_moveright) - CL_KeyState(&in_moveleft);
+	in_dir[2] = 0;
+
+	if (in_dir[0] != 0)
+	{
+		in_dir_last[0] = Sign(in_dir[0]);
+		in_dir_smoothed[0] += in_dir[0] * 10.0*host_frametime;
+	}
+
+	if (in_dir[1] != 0)
+	{
+		in_dir_last[1] = Sign(in_dir[1]);
+		in_dir_smoothed[1] += in_dir[1] * 10.0*host_frametime;
+	}
+
+	in_dir_smoothed[2] = 0;
+
+	in_dir_smoothed[0] = CLAMP(-1, in_dir_smoothed[0], 1);
+	in_dir_smoothed[1] = CLAMP(-1, in_dir_smoothed[1], 1);
+
+	if (in_dir[0] == 0)	{
+		in_dir_smoothed[0] = 0;
+		in_dir_smoothed[0] -= 2.0 *host_frametime * in_dir_last[0];
+		if (in_dir_last[0] < 0) in_dir_smoothed[0] = CLAMP(-1, in_dir_smoothed[0], 0);
+		else
+		if (in_dir_last[0] > 0) in_dir_smoothed[0] = CLAMP(0, in_dir_smoothed[0], 1);
+	}
+
+	if (in_dir[1] == 0) {
+		in_dir_smoothed[1] = 0;
+		in_dir_smoothed[1] -= 2.0 * host_frametime * in_dir_last[1];
+		if (in_dir_last[1] < 0) in_dir_smoothed[1] = CLAMP(-1, in_dir_smoothed[1], 0);
+		else
+		if (in_dir_last[1] > 0) in_dir_smoothed[1] = CLAMP(0, in_dir_smoothed[1], 1);
+	}
+
+
+	if (in_dir[1] != 0 || (in_dir[0] != 0))
+	{
+		final_dir[0] = in_dir_smoothed[0] * cos(rd_yaw) - in_dir_smoothed[1] * sin(rd_yaw);
+		final_dir[1] = in_dir_smoothed[0] * sin(rd_yaw) + in_dir_smoothed[1] * cos(rd_yaw);
+	}
+
+
+	//ang[1] = fmod((cl_yaw - rd_yaw + 360),360);
+	
+	//if (ang > 180) ang = 360 - ang;
+	//if(cl_yaw>180)
+
+
+	if (in_dir_smoothed[0] != 0 || in_dir_smoothed[1] != 0)
+	{
+		n_yaw = atan2(final_dir[1], final_dir[0]);
+		n_yaw = n_yaw * (180.0 / M_PI);
+		last_yaw = n_yaw;
+		//if (n_yaw > 180) n_yaw = 360 - n_yaw;
+		//if (in_dir[1] > 0) n_yaw += 360;
+	} 
+		cl.viewangles[YAW] = last_yaw;
+
+		//cl.viewangles[YAW] += turnspeed * CL_KeyState(&in_moveleft);
+		
+	if (VectorLength(in_dir) > 0)
+	{
+		cmd->forwardmove += cl_forwardspeed.value;
+	}
+	cmd->viewangles[YAW] = cl.viewangles[YAW]; //anglemod(cl.viewangles[YAW]);
+	VectorCopy(cl.viewangles, cmd->viewangles);
+	if (cls.signon != SIGNONS)
+		return;
+
+	//cmd->sidemove += cl_sidespeed.value * CL_KeyState(&in_moveright);
+	//cmd->sidemove -= cl_sidespeed.value * CL_KeyState(&in_moveleft);
+
+	cmd->upmove += cl_upspeed.value * CL_KeyState(&in_up);
+	cmd->upmove -= cl_upspeed.value * CL_KeyState(&in_down);
+
+	//cmd->forwardmove += cl_forwardspeed.value * CL_KeyState(&in_forward);
+	//cmd->forwardmove -= cl_backspeed.value * CL_KeyState(&in_back);
+
+
+	//
+	// adjust for speed key
+	//
 	if ((in_speed.state & 1) ^ (cl_alwaysrun.value != 0.0))
 	{
 		cmd->forwardmove *= cl_movespeedkey.value;

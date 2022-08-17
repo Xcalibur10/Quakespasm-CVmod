@@ -347,6 +347,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define svcfte_updateentities		86
 //spike -- end
 
+#define svc_setmaxturn				100
+
 // 2021 re-release server messages - see:
 // https://steamcommunity.com/sharedfiles/filedetails/?id=2679459726
 #define svcqe_botchat				38
@@ -479,6 +481,7 @@ typedef struct entity_state_s
 	unsigned char	colormod[3];	//spike -- entity tints, *32
 	unsigned char	alpha;		//johnfitz -- added
 	unsigned int	solidsize;	//for csqc prediction logic.
+	unsigned int	texspeed;
 					#define ES_SOLID_NOT 0
 					#define ES_SOLID_BSP 31
 					#define ES_SOLID_HULL1 0x80201810

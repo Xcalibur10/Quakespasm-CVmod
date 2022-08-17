@@ -219,6 +219,8 @@ typedef struct
 
 	float		last_received_message;	// (realtime) for net trouble icon
 
+	float		maxturnspeed;
+
 //
 // information that is static for the entire time connected to a server
 //
@@ -259,7 +261,7 @@ typedef struct
 	unsigned	protocol_pext2;	//spike -- flag of fte protocol extensions
 	qboolean	protocol_dpdownload;
 
-	float		turnspeedlimit;
+	
 
 #ifdef PSET_SCRIPT
 	qboolean	protocol_particles;
@@ -413,6 +415,7 @@ void CL_SendMove (const usercmd_t *cmd);
 int  CL_ReadFromServer (void);
 void CL_AdjustAngles (void);
 void CL_BaseMove (usercmd_t *cmd);
+void CL_BaseMoveOrbit(usercmd_t* cmd);
 void CL_FinishMove(usercmd_t *cmd);
 
 void CL_Download_Data(void);

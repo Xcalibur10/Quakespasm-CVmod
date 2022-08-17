@@ -769,49 +769,65 @@ void V_CalcIntermissionRefdef (void)
 	v_idlescale.value = old;
 }
 
+vec3_t new_vangles = { 0, 0, 0 };
+
 /*
 ==================
 V_CalcRefdef
 ==================
 */
-void V_CalcRefdef (void)
+void V_CalcRefdef(void)
 {
-	entity_t	*ent, *view;
+	entity_t* ent, * view;
 	int			i;
 	vec3_t		forward, right, up;
 	vec3_t		angles;
 	float		bob;
 	static float oldz = 0;
-	static vec3_t punch = {0,0,0}; //johnfitz -- v_gunkick
+	static vec3_t punch = { 0,0,0 }; //johnfitz -- v_gunkick
 	float delta; //johnfitz -- v_gunkick
 
-	V_DriftPitch ();
+	V_DriftPitch();
 
-// ent is the player model (visible when out of body)
+	// ent is the player model (visible when out of body)
 	ent = &cl.entities[cl.viewentity];
-// view is the weapon model (only visible from inside body)
+	// view is the weapon model (only visible from inside body)
 	view = &cl.viewent;
 
 
-// transform the view offset by the model's matrix to get the offset from
-// model origin for the view
+	// transform the view offset by the model's matrix to get the offset from
+	// model origin for the view
 	ent->angles[YAW] = cl.viewangles[YAW];	// the model should face the view dir
-	ent->angles[PITCH] = -cl.viewangles[PITCH];	// the model should face the view dir
+	//ent->angles[PITCH] = -cl.viewangles[PITCH];	// the model should face the view dir
 
-	bob = V_CalcBob ();
+	bob = V_CalcBob();
 
-// refresh position
-	VectorCopy (ent->origin, r_refdef.vieworg);
+	// refresh position
+	VectorCopy(ent->origin, r_refdef.vieworg);
 	r_refdef.vieworg[2] += cl.stats[STAT_VIEWHEIGHT] + bob;
 
-// never let it sit exactly on a node line, because a water plane can
-// dissapear when viewed with the eye exactly on it.
-// the server protocol only specifies to 1/16 pixel, so add 1/32 in each axis
-	r_refdef.vieworg[0] += 1.0/32;
-	r_refdef.vieworg[1] += 1.0/32;
-	r_refdef.vieworg[2] += 1.0/32;
+	// never let it sit exactly on a node line, because a water plane can
+	// dissapear when viewed with the eye exactly on it.
+	// the server protocol only specifies to 1/16 pixel, so add 1/32 in each axis
+	r_refdef.vieworg[0] += 1.0 / 32;
+	r_refdef.vieworg[1] += 1.0 / 32;
+	r_refdef.vieworg[2] += 1.0 / 32;
 
-	//VectorCopy (cl.viewangles, r_refdef.viewangles);
+	
+
+	//Camera depends on view modes!!! Orbit camera or normal?
+	if (chase_active.value <= 1)
+	{
+		//new_vangles[0] = cl.viewangles[0];
+		//new_vangles[1] = LerpAngle(r_refdef.viewangles[YAW], cl.viewangles[YAW], 1);
+		//new_vangles[2] = cl.viewangles[2];
+		VectorCopy(cl.viewangles, r_refdef.viewangles);
+		//VectorCopy(new_vangles, r_refdef.viewangles);
+	}
+	else
+	{
+		r_refdef.viewangles[0] = cl.viewangles[0];
+	}
 	//r_refdef.viewangles[1] = 0; //FIX CAMERA! REMOVE LATER
 	
 	
@@ -909,10 +925,10 @@ void V_CalcRefdef (void)
 	else
 		oldz = ent->origin[2];
 
-	if (chase_active.value==1)
+	if (chase_active.value)
 		Chase_UpdateForDrawing (); //johnfitz
-	else if (chase_active.value>=2)
-		Chase_UpdateForDrawing2();
+	//else if (chase_active.value >= 2)
+	//	Chase_UpdateForDrawing2();
 }
 
 /*

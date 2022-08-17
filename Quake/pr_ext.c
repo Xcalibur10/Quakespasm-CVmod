@@ -6068,6 +6068,7 @@ static void PR_addentity_internal(edict_t *ed)	//adds a csqc entity into the sce
 			eval_t *frame1time = GetEdictFieldValue(ed, qcvm->extfields.frame1time);
 			eval_t *frame2time = GetEdictFieldValue(ed, qcvm->extfields.frame2time);
 			eval_t *alpha = GetEdictFieldValue(ed, qcvm->extfields.alpha);
+			eval_t* texspeed = GetEdictFieldValue(ed, qcvm->extfields.texspeed);
 			eval_t *renderflags = GetEdictFieldValue(ed, qcvm->extfields.renderflags);
 			int rf = renderflags?renderflags->_float:0;
 
@@ -6870,6 +6871,8 @@ enum getrenderentityfield_e
 	GE_TAGINDEX			= 216,
 //	GE_GRAVITYDIR		= 217,
 	GE_TRAILEFFECTNUM	= 218,
+
+	GE_TEXSPEED			= 300,
 };
 static void PF_cl_getrenderentity(void)
 {
@@ -6932,6 +6935,7 @@ static void PF_cl_getrenderentity(void)
 	case GE_ALPHA:
 		G_FLOAT(OFS_RETURN+0) = ENTALPHA_DECODE(cl.entities[entnum].alpha);
 		break;
+
 	case GE_COLORMOD:
 		G_FLOAT(OFS_RETURN+0) = cl.entities[entnum].netstate.colormod[0] / 32.0;
 		G_FLOAT(OFS_RETURN+1) = cl.entities[entnum].netstate.colormod[1] / 32.0;
@@ -7004,12 +7008,15 @@ static void PF_cl_getrenderentity(void)
 	case GE_TRAILEFFECTNUM:
 		G_FLOAT(OFS_RETURN+0) = cl.entities[entnum].netstate.traileffectnum;
 		break;
-
+	case GE_TEXSPEED:
+		G_FLOAT(OFS_RETURN + 0) = cl.entities[entnum].texspeed;
+		break;
 	case GE_MAXENTS:
 	default:
 		Con_Printf("PF_cl_getrenderentity(,%i): not implemented\n", fldnum);
 		break;
 	}
+
 }
 
 
@@ -7124,13 +7131,16 @@ static void PF_ex_localsound (void)
 
 static void PF_cl_turnlimit(void)
 {
-	//edict_t *ent;
-	float	limit;
-	limit = G_FLOAT(OFS_PARM0);
-	cl.turnspeedlimit = limit;
+	edict_t *ent = G_EDICT(OFS_PARM0);
+	eval_t *val;
+	//Con_Printf("");
+	float limit = G_FLOAT(OFS_PARM1);
+	if ((val = GetEdictFieldValue(ent, qcvm->extfields.maxturnspeed)))
+		val->edict = EDICT_TO_PROG(ent);
+	cl.maxturnspeed = ent->maxturnspeed;
+	//ent->turnspeedlimit = limit;
 
-	return limit;
-
+	//return limit;
 }
 
 
@@ -7586,7 +7596,7 @@ static struct
 	{"setbindmaps",		PF_NoSSQC,			PF_cl_setbindmaps,			632,	PF_cl_setbindmaps,632, "float(vector bm)", "stub."},
 	{"digest_hex",		PF_digest_hex,		PF_digest_hex,				639,	PF_digest_hex, 639, "string(string digest, string data, ...)"},
 	//NEW EXTENSIONS STARTING FROM 1000
-	{ "setturnlimit",		PF_cl_turnlimit,	PF_cl_turnlimit,			1000,	PF_cl_turnlimit, 1000, "void(float limit)" },
+	{ "setturnlimit",		PF_cl_turnlimit,	PF_cl_turnlimit,			1000,	PF_cl_turnlimit, 1000, "void(entity e,float limit)" },
 };
 
 qboolean PR_Can_Particles(unsigned int prot, unsigned int pext1, unsigned int pext2)

@@ -1498,11 +1498,11 @@ void SV_Init (void)
 	Cvar_RegisterVariable (&sv_maxspeed);
 	Cvar_SetCallback (&sv_maxspeed, Host_Callback_Notify);
 
-	Cvar_RegisterVariable(&sv_maxsidespeed);
-	Cvar_SetCallback(&sv_maxsidespeed, Host_Callback_Notify);
+	Cvar_RegisterVariable (&sv_maxsidespeed);
+	Cvar_SetCallback (&sv_maxsidespeed, Host_Callback_Notify);
 
-	//Cvar_RegisterVariable(&sv_maxbackspeed);
-	//Cvar_SetCallback(&sv_maxbackspeed, Host_Callback_Notify);
+	Cvar_RegisterVariable (&sv_maxbackspeed);
+	Cvar_SetCallback (&sv_maxbackspeed, Host_Callback_Notify);
 
 	Cvar_RegisterVariable (&sv_accelerate);
 
@@ -1519,6 +1519,8 @@ void SV_Init (void)
 	Cvar_RegisterVariable (&sv_gameplayfix_setmodelrealbox);
 	Cvar_RegisterVariable (&pr_checkextension);
 	Cvar_RegisterVariable (&sv_altnoclip); //johnfitz
+
+
 
 	Cvar_RegisterVariable (&sv_sound_watersplash); //spike
 	Cvar_RegisterVariable (&sv_sound_land); //spike

@@ -931,6 +931,7 @@ void CLFTE_ParseCSQCEntitiesUpdate(void)
 #define E5_UNUSED29 (1<<29)
 #define E5_UNUSED30 (1<<30)
 #define E5_EXTEND4 (1<<31)
+#define E5_TEXSPEED (1<<32)
 
 #define E5_ALLUNUSED (E5_UNUSED27|E5_UNUSED28|E5_UNUSED29|E5_UNUSED30|E5_EXTEND4)
 #define E5_ALLUNSUPPORTED (E5_LIGHT|E5_GLOW|E5_GLOWMOD|E5_COMPLEXANIMATION)
@@ -1093,6 +1094,9 @@ static void CLDP_ReadDelta(unsigned int entnum, entity_state_t *s, const entity_
 	}
 	if (bits & E5_TRAILEFFECTNUM)
 		s->traileffectnum = MSG_ReadShort();
+
+	if (bits & E5_TRAILEFFECTNUM)
+		s->texspeed = MSG_ReadShort();
 }
 
 //dpp5-7 compat
@@ -2938,7 +2942,14 @@ void CL_ParseServerMessage (void)
 				Host_Error ("Received svcfte_voicechat but extension not active");
 			S_Voip_Parse();
 			break;
+
+		case svc_setmaxturn:
+			cl.maxturnspeed = MSG_ReadByte();
+			//cl.looptrack = MSG_ReadByte();
+			break;
 		}
+
+
 
 		lastcmd = cmd; //johnfitz
 	}
