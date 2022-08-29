@@ -7131,13 +7131,13 @@ static void PF_ex_localsound (void)
 
 static void PF_cl_turnlimit(void)
 {
-	edict_t *ent = G_EDICT(OFS_PARM0);
-	eval_t *val;
+	//edict_t *ent = G_EDICT(OFS_PARM0);
+	//eval_t *val;
 	//Con_Printf("");
-	float limit = G_FLOAT(OFS_PARM1);
-	if ((val = GetEdictFieldValue(ent, qcvm->extfields.maxturnspeed)))
-		val->edict = EDICT_TO_PROG(ent);
-	cl.maxturnspeed = ent->maxturnspeed;
+	//float limit = G_FLOAT(OFS_PARM1);
+	//if ((val = GetEdictFieldValue(ent, qcvm->extfields.maxturnspeed)))
+	//	val->edict = EDICT_TO_PROG(ent);
+	//cl.maxturnspeed = ent->maxturnspeed;
 	//ent->turnspeedlimit = limit;
 
 	//return limit;
@@ -7597,6 +7597,7 @@ static struct
 	{"digest_hex",		PF_digest_hex,		PF_digest_hex,				639,	PF_digest_hex, 639, "string(string digest, string data, ...)"},
 	//NEW EXTENSIONS STARTING FROM 1000
 	{ "setturnlimit",		PF_cl_turnlimit,	PF_cl_turnlimit,			1000,	PF_cl_turnlimit, 1000, "void(entity e,float limit)" },
+	{ "sound2",		PF_cl_turnlimit,	PF_cl_turnlimit,			1001,	PF_cl_turnlimit, 1000, "void(entity e,float limit)" },
 };
 
 qboolean PR_Can_Particles(unsigned int prot, unsigned int pext1, unsigned int pext2)

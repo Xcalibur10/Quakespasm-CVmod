@@ -1156,7 +1156,7 @@ void SV_WalkMove (edict_t *ent)
 
 // extra friction based on view angle
 	if (clip & 2)
-		SV_WallFriction (ent, &steptrace); //IS THIS REALLY NECESSARY? YES
+		SV_WallFriction (ent, &steptrace);
 
 // move down
 	downtrace = SV_PushEntity (ent, downmove);	// FIXME: don't link?
@@ -1190,6 +1190,8 @@ Player character actions
 void SV_Physics_Client (edict_t	*ent, int num)
 {
 	eval_t *val;
+
+	qboolean onground;
 
 	if ( ! svs.clients[num-1].active )
 		return;		// unconnected slot
@@ -1227,12 +1229,19 @@ void SV_Physics_Client (edict_t	*ent, int num)
 			return;
 		break;
 
+
 	case MOVETYPE_WALK:
+		
+		onground = (int)ent->v.flags & FL_ONGROUND;
 		if (!SV_RunThink (ent))
 			return;
-		if (!SV_CheckWater (ent) && ! ((int)ent->v.flags & FL_WATERJUMP) )
-			if (!sv_player->onladder)
-				SV_AddGravity (ent);
+		if (!SV_CheckWater(ent) && !((int)ent->v.flags & FL_WATERJUMP))
+		{
+			if (!sv_player->onladder && !onground)
+			{
+				SV_AddGravity(ent);
+			}
+		}
 		SV_CheckStuck (ent);
 		SV_WalkMove (ent);
 		break;

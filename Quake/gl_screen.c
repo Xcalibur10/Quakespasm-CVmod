@@ -571,30 +571,28 @@ void SCR_DrawFPS (void)
 	}
 }
 
+float  movementspeed;
+
 /*
 ==============
-showspeed -- Adam Pajor
+showspeed -- Shows the movement velocity on the middle of the screen -- JoeyAP
 ==============
 */
 void ShowSpeed(void)
 {
+	char	st[32] = "?";
+	int	x, y;
+	vec3_t temp_mv;
+
 	if (showspeed.value>=1)
 	{
-		char	st[32];
-		int	x, y;
-		float  movementspeed = 0;
-		vec3_t movementvec;
-		vec3_t temp_mv;
-
 		if (showspeed.value == 1)
 		{
 			movementspeed = (VectorLength(cl.velocity));
 			sprintf(st, "%4.0f ups", movementspeed);
 		}
 		else
-		if (showspeed.value == 2)
 		{
-			
 			temp_mv[0] = cl.velocity[0];
 			temp_mv[1] = cl.velocity[1];
 
@@ -614,7 +612,7 @@ void ShowSpeed(void)
 		y = 16;
 		GL_SetCanvas(CANVAS_CENTER);
 		Draw_String(x, y, st);
-		scr_tileclear_updates = 0;
+		//scr_tileclear_updates = 0;
 	}
 }
 
@@ -1304,7 +1302,7 @@ void SCR_UpdateScreen (void)
 		SCR_DrawFPS (); //johnfitz
 		SCR_DrawClock (); //johnfitz
 		SCR_DrawConsole ();
-		ShowSpeed(); //Adam Pajor
+		ShowSpeed(); //JoeyAP
 		M_Draw ();
 	}
 

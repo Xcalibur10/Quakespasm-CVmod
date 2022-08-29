@@ -1,9 +1,6 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(499,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
 cl : command line warning D9035: option 'Gm' has been deprecated and will be removed in a future release
-  r_brush.c
-D:\Documents\GitHub\Quakespasm-CVmod\Quake\r_brush.c(54,8): warning C4101: 'texturespeed': unreferenced local variable
-  cl_parse.c
-  Generating Code...
+  r_alias.c
   quakespasm-sdl2.vcxproj -> D:\Games\GOG Games\Quakemod\Quakespasm-Spiked-Mod.exe
   D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\codecs\x64\libFLAC-8.dll
   D:\Documents\GitHub\Quakespasm-CVmod\Windows\VisualStudio\\..\codecs\x64\libmad-0.dll

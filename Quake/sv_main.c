@@ -1711,7 +1711,7 @@ void SV_StartSound2 (edict_t *entity, float *origin, int channel, const char *sa
 		else
 			msg = &cl->datagram;
 		client_mask = field_mask;
-		if (!(cl->protocol_pext2&PEXT2_REPLACEMENTDELTAS))
+		//if (!(cl->protocol_pext2&PEXT2_REPLACEMENTDELTAS))
 			client_mask &= (SND_VOLUME|SND_ATTENUATION|SND_LARGEENTITY|SND_LARGESOUND);
 
 		// directed messages go only to the entity the are targeted on

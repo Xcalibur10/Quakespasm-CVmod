@@ -734,7 +734,7 @@ R_SetupAliasFrame -- johnfitz -- rewritten to support lerping
 void R_SetupAliasFrame (aliashdr_t *paliashdr, entity_t *e, lerpdata_t *lerpdata)
 {
 	int frame = e->frame;
-	int				posenum, numposes;
+	int	posenum, numposes;
 
 	if ((frame >= paliashdr->numframes) || (frame < 0))
 	{
@@ -798,7 +798,12 @@ void R_SetupAliasFrame (aliashdr_t *paliashdr, entity_t *e, lerpdata_t *lerpdata
 			posenum += (int)(time / e->lerp.state.lerptime) % numposes;
 		}
 		else
-			e->lerp.state.lerptime = 0.1;
+		{
+			//Change lerp speed based on nextthink
+			//float time = cl.time + e->syncbase;
+			//float lerpspeed = 0.1;
+			e->lerp.state.lerptime = 0.1; //0.1
+		}
 
 		if (e->lerpflags & LERP_RESETANIM) //kill any lerp in progress
 		{

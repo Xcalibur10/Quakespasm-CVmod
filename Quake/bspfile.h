@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // upper design bounds
 
-#define	MAX_MAP_HULLS		4
+#define	MAX_MAP_HULLS		8	//Number of map hulls... duh... originally 4... WE NEED MORE HULLS!!!
 
 #define	MAX_MAP_MODELS		256
 #define	MAX_MAP_BRUSHES		4096
@@ -222,12 +222,14 @@ typedef struct
 	unsigned int	numfaces;	// counting both sides
 } dl2node_t;
 
+//children[2]
 typedef struct
 {
 	int			planenum;
 	short		children[2];	// negative numbers are contents
 } dsclipnode_t;
 
+//children[2]
 typedef struct
 {
 	int			planenum;

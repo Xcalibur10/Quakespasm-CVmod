@@ -2028,7 +2028,7 @@ void Mod_ProcessLeafs_L2 (dl2leaf_t *in, int filelen)
 
 	for (i=0 ; i<count ; i++, in++, out++)
 	{
-		for (j=0 ; j<3 ; j++)
+		for (j=0 ; j<3 ; j++) //3 originally
 		{
 			out->minmaxs[j] = LittleFloat (in->mins[j]);
 			out->minmaxs[3+j] = LittleFloat (in->maxs[j]);
@@ -2239,10 +2239,11 @@ void Mod_LoadClipnodes (lump_t *l, qboolean bsp2)
 	//hull->clip_maxs[1] = 32;
 	//hull->clip_maxs[2] = 64;
 
+	//Player
 	hull = &loadmodel->hulls[1];
 	hull->clipnodes = out;
 	hull->firstclipnode = 0;
-	hull->lastclipnode = count - 1;
+	hull->lastclipnode = count-1;
 	hull->planes = loadmodel->planes;
 	hull->clip_mins[0] = -16;
 	hull->clip_mins[1] = -16;
@@ -2251,10 +2252,11 @@ void Mod_LoadClipnodes (lump_t *l, qboolean bsp2)
 	hull->clip_maxs[1] = 16;
 	hull->clip_maxs[2] = 32;
 
+	//Shambler, Ogre, etc...
 	hull = &loadmodel->hulls[2];
 	hull->clipnodes = out;
 	hull->firstclipnode = 0;
-	hull->lastclipnode = count - 1;
+	hull->lastclipnode = count-1;
 	hull->planes = loadmodel->planes;
 	hull->clip_mins[0] = -32;
 	hull->clip_mins[1] = -32;
@@ -2263,6 +2265,9 @@ void Mod_LoadClipnodes (lump_t *l, qboolean bsp2)
 	hull->clip_maxs[1] = 32;
 	hull->clip_maxs[2] = 64;
 
+	//NOT QUAKE HULLS
+
+	//Dog and other smaller enemies
 	hull = &loadmodel->hulls[3];
 	hull->clipnodes = out;
 	hull->firstclipnode = 0;
@@ -2275,6 +2280,35 @@ void Mod_LoadClipnodes (lump_t *l, qboolean bsp2)
 	hull->clip_maxs[1] = 16;
 	hull->clip_maxs[2] = 8;
 
+	//Crouch
+	/*
+	hull = &loadmodel->hulls[4];
+	hull->clipnodes = out;
+	hull->firstclipnode = 0;
+	hull->lastclipnode = count - 1;
+	hull->planes = loadmodel->planes;
+	hull->clip_mins[0] = -40;
+	hull->clip_mins[1] = -40;
+	hull->clip_mins[2] = -42;
+	hull->clip_maxs[0] = 40;
+	hull->clip_maxs[1] = 40;
+	hull->clip_maxs[2] = 42;
+
+	
+
+	//Reserved for now... GIANT STUFF!!! NAH... NOT REALLY
+	hull = &loadmodel->hulls[5];
+	hull->clipnodes = out;
+	hull->firstclipnode = 0;
+	hull->lastclipnode = count - 1;
+	hull->planes = loadmodel->planes;
+	hull->clip_mins[0] = -28;
+	hull->clip_mins[1] = -28;
+	hull->clip_mins[2] = -40;
+	hull->clip_maxs[0] = 28;
+	hull->clip_maxs[1] = 28;
+	hull->clip_maxs[2] = 40;
+	*/
 
 	if (bsp2)
 	{
@@ -2380,6 +2414,25 @@ void Mod_MakeHull0 (void)
 		loadmodel->hulls[3].clipnodes = loadmodel->hulls[2].clipnodes;
 		loadmodel->hulls[3].firstclipnode = loadmodel->hulls[2].firstclipnode;
 		loadmodel->hulls[3].lastclipnode = loadmodel->hulls[2].lastclipnode;
+
+	}
+	if (!loadmodel->hulls[4].clipnodes) //added JoeyAP (extra hull)
+	{
+		loadmodel->hulls[4].clip_maxs[2] -= loadmodel->hulls[4].clip_mins[2];
+		loadmodel->hulls[4].clip_mins[2] = 0;
+		loadmodel->hulls[4].clipnodes = loadmodel->hulls[3].clipnodes;
+		loadmodel->hulls[4].firstclipnode = loadmodel->hulls[3].firstclipnode;
+		loadmodel->hulls[4].lastclipnode = loadmodel->hulls[3].lastclipnode;
+
+	}
+	if (!loadmodel->hulls[5].clipnodes) //added JoeyAP (extra hull)
+	{
+		loadmodel->hulls[5].clip_maxs[2] -= loadmodel->hulls[5].clip_mins[2];
+		loadmodel->hulls[5].clip_mins[2] = 0;
+		loadmodel->hulls[5].clipnodes = loadmodel->hulls[4].clipnodes;
+		loadmodel->hulls[5].firstclipnode = loadmodel->hulls[4].firstclipnode;
+		loadmodel->hulls[5].lastclipnode = loadmodel->hulls[4].lastclipnode;
+
 	}
 }
 
@@ -2655,7 +2708,6 @@ void Mod_BoundsFromClipNode (qmodel_t *mod, int hull, int nodenum)
 
 	Mod_BoundsFromClipNode (mod, hull, node->children[0]);
 	Mod_BoundsFromClipNode (mod, hull, node->children[1]);
-	//Mod_BoundsFromClipNode (mod, hull, node->children[2]); //No idea, what this do exactly... (JoeyAP)
 }
 
 /* EXTERNAL VIS FILE SUPPORT:

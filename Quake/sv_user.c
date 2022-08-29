@@ -114,7 +114,6 @@ void SV_SetIdealPitch (void)
 	sv_player->v.idealpitch = -dir * sv_idealpitchscale.value;
 }
 
-
 /*
 ==================
 SV_UserFriction
@@ -168,7 +167,7 @@ SV_Accelerate
 */
 cvar_t	sv_maxspeed = {"sv_maxspeed", "320", CVAR_NOTIFY|CVAR_SERVERINFO};
 cvar_t	sv_maxsidespeed = { "sv_maxsidespeed", "220", CVAR_NOTIFY | CVAR_SERVERINFO };
-cvar_t	sv_maxbackspeed = { "sv_maxspeed", "220", CVAR_NOTIFY | CVAR_SERVERINFO };
+cvar_t	sv_maxbackspeed = { "sv_maxbackspeed", "220", CVAR_NOTIFY | CVAR_SERVERINFO };
 cvar_t	sv_accelerate = {"sv_accelerate", "10", CVAR_NONE};
 cvar_t	sv_nobhop = { "sv_nobhop", "0", CVAR_NOTIFY | CVAR_SERVERINFO };
 
@@ -246,12 +245,17 @@ SV_WaterMove
 void SV_WaterMove (void)
 {
 	int		i;
-	vec3_t	wishvel;
+	vec3_t	wishvel, norm_maxspeed;
 	float	speed, newspeed, wishspeed, addspeed, accelspeed;
 
 //
 // user intentions
 //
+	norm_maxspeed[0] = sv_maxspeed.value;
+	norm_maxspeed[1] = sv_maxsidespeed.value;
+	norm_maxspeed[2] = sv_maxbackspeed.value;
+
+	VectorNormalize01(norm_maxspeed,norm_maxspeed);
 	AngleVectors (sv_player->v.v_angle, forward, right, up);
 
 	for (i = 0; i < 3; i++)
@@ -272,9 +276,12 @@ void SV_WaterMove (void)
 		wishvel[2] += cmd.upmove;
 
 	wishspeed = VectorLength(wishvel);
+	float len_maxspeed = VectorLength(norm_maxspeed)*sv_maxspeed.value;
+
+	//if (wishspeed > sv_maxspeed.value)
 	if (wishspeed > sv_maxspeed.value)
 	{
-		VectorScale (wishvel, sv_maxspeed.value/wishspeed, wishvel);
+		VectorScale (wishvel, len_maxspeed /wishspeed, wishvel);
 		wishspeed = sv_maxspeed.value;
 	}
 	wishspeed *= 0.7;
@@ -355,16 +362,19 @@ SV_AirMove
 void SV_AirMove(void)
 {
 	int			i;
-	vec3_t		wishvel, wishdir;
-	float		wishspeed;
+	vec3_t		wishvel, wishdir, maxvel;
+	float		wishspeed, maxspeed;
 	vec3_t		wish_vec;	//JoeyAP - wish velocity using max forward, backward and sideway speeds
 	float		fmove, smove;
-	vec3_t		move_vec, input_norm;
+	vec3_t		move_vec, input_norm, max_norm;
 
 	AngleVectors(sv_player->v.angles, forward, right, up);
 
 	fmove = cmd.forwardmove;
 	smove = cmd.sidemove;
+
+	fmove = CLAMP(-sv_maxbackspeed.value, fmove, sv_maxspeed.value);
+	smove = CLAMP(-sv_maxsidespeed.value, smove, sv_maxsidespeed.value);
 
 
 	// hack to not let you back into teleporter
@@ -376,24 +386,34 @@ void SV_AirMove(void)
 	move_vec[2] = 0;
 
 	VectorNormalize01(move_vec, input_norm);
+	maxvel[0] = sv_maxspeed.value;
+	maxvel[1] = sv_maxsidespeed.value;
+	maxvel[2] = 0;
+
+	
 
 	for (i = 0; i < 3; i++)
-		wishvel[i] = forward[i] * (fmove*input_norm[0]) + right[i] * (smove*input_norm[1]);
-
+	{
+		wishvel[i] = forward[i] * (fmove * input_norm[0]) + right[i] * (smove * input_norm[1]);
+		maxvel[i] = forward[i] * maxvel[0] * fmove + right[i] * maxvel[1] * smove;
+	}
+	//VectorNormalize01(maxvel, max_norm);
 
 	if ((int)sv_player->v.movetype != MOVETYPE_WALK)
 		wishvel[2] = cmd.upmove;
 	else
 		wishvel[2] = 0;
 
-
+	
+	maxspeed = sv_maxspeed.value; //WILL BE CHANGED
 
 	VectorCopy(wishvel, wishdir);
 	wishspeed = VectorNormalize(wishdir);
-	if (wishspeed > sv_maxspeed.value)
+	//if (wishspeed > sv_maxspeed.value)
+	if (wishspeed > maxspeed)
 	{
-		VectorScale(wishvel, sv_maxspeed.value / wishspeed, wishvel);
-		wishspeed = sv_maxspeed.value;
+		VectorScale(wishvel, maxspeed / wishspeed, wishvel);
+		wishspeed = maxspeed;
 	}
 
 	if (sv_player->v.movetype == MOVETYPE_NOCLIP)
@@ -402,8 +422,10 @@ void SV_AirMove(void)
 	}
 	else if (onground)
 	{
-		SV_UserFriction();
+		sv_player->v.velocity[2] = q_min(sv_player->v.velocity[2], 0);
+		SV_UserFriction();	
 		SV_Accelerate(wishspeed, wishdir);
+		
 	}
 	else
 	{	// not on ground, so little effect on velocity

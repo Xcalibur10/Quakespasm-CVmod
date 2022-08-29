@@ -947,7 +947,7 @@ void Sky_GetTexCoord (vec3_t v, float speed, float *s, float *t)
 	length = sqrt (length);
 	length = 6*63/length;
 
-	scroll = cl.time*speed;
+	scroll = cl.time * speed * 0.25;
 	scroll -= (int)scroll & ~127;
 
 	*s = (scroll + dir[0] * length) * (1.0/128);
@@ -1200,7 +1200,8 @@ void Sky_DrawSky (void)
 	if (!r_fastsky.value && !(Fog_GetDensity() > 0 && skyfog >= 1))
 	{
 		glDepthFunc(GL_GEQUAL);
-		glDepthMask(1);		//modified from 0... was it a good idea? Well, it makes Reshade ambient occlusion shaders work nicely. No more black spots in the sky. I wonder what I broke with it...
+		//glDepthMask(1);		//modified from 0... was it a good idea? Well, it makes Reshade ambient occlusion shaders work nicely. No more black spots in the sky. I wonder what I broke with it...
+		glDepthMask(0);
 
 		if (skybox_name[0])
 			Sky_DrawSkyBox ();

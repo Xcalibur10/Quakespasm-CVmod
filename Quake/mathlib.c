@@ -950,3 +950,8 @@ float LerpAngle(from, to, weight)
 	float distance = fmod(2.0 * difference, 2 * M_PI) - difference;
 	return from + distance * weight;
 }
+
+void min(float a, float b)
+{
+	return ((a) < (b)) ? (a) : (b);
+}

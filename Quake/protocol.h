@@ -482,6 +482,7 @@ typedef struct entity_state_s
 	unsigned char	alpha;		//johnfitz -- added
 	unsigned int	solidsize;	//for csqc prediction logic.
 	unsigned int	texspeed;
+	float			lerpspeed;
 					#define ES_SOLID_NOT 0
 					#define ES_SOLID_BSP 31
 					#define ES_SOLID_HULL1 0x80201810
