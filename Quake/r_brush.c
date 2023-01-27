@@ -51,9 +51,6 @@ texture_t *R_TextureAnimation (texture_t *base, int frame)
 {
 	int		relative;
 	int		count;
-	float	texturespeed;
-
-	
 
 	if (frame)
 		if (base->alternate_anims)
@@ -62,7 +59,6 @@ texture_t *R_TextureAnimation (texture_t *base, int frame)
 	if (!base->anim_total)
 		return base;
 
-	//texturespeed = ;
 	relative = (int)(cl.time*currententity->texspeed) % base->anim_total;
 
 	count = 0;

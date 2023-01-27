@@ -52,6 +52,9 @@ void R_TimeRefresh_f (void);
 void R_ReadPointFile_f (void);
 texture_t *R_TextureAnimation (texture_t *base, int frame);
 
+//Blob shadow textures loaded here
+gltexture_t *shadowblob;
+
 typedef struct surfcache_s
 {
 	struct surfcache_s	*next;
@@ -430,10 +433,12 @@ void R_DeleteShaders (void);
 void GLWorld_CreateShaders (void);
 void GLAlias_CreateShaders (void);
 void GL_DrawAliasShadow (entity_t *e);
+void GL_DrawAliasShadowN64(entity_t* e); //Mario 64 style shadow blob
 void DrawGLTriangleFan (glpoly_t *p);
 void DrawGLPoly (glpoly_t *p);
 void DrawWaterPoly (glpoly_t *p);
 void GL_MakeAliasModelDisplayLists (qmodel_t *m, aliashdr_t *hdr);
+void R_DrawTraceLines();
 
 void Sky_Init (void);
 void Sky_ClearAll (void);
@@ -446,6 +451,8 @@ extern qboolean skyroom_drawn, skyroom_drawing;		//we draw a skyroom this frame
 extern qboolean skyroom_enabled;	//we know where the skyroom is ...
 extern vec4_t skyroom_origin;		//... and it is here. [3] is paralax scale
 extern vec4_t skyroom_orientation;
+
+void LoadShadowTexture(void);
 
 void TexMgr_RecalcWarpImageSize (void);
 

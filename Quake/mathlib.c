@@ -24,6 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
+
+
 vec3_t vec3_origin = {0,0,0};
 
 /*-----------------------------------------------------------------*/
@@ -886,12 +888,11 @@ void Matrix4_ProjectionMatrix(float fovx, float fovy, float neard, float fard, q
 }
 
 //Just a sign function... because I needed that
-float Sign(float num)
+int Sign(float num)
 {
-	if (num < 0) return -1;
-	else
 	if (num > 0) return 1;
-		else return 0;
+	if (num < 0) return -1;
+	return 0;
 
 }
 
@@ -951,7 +952,154 @@ float LerpAngle(from, to, weight)
 	return from + distance * weight;
 }
 
+float absAngle(a) {
+	// this yields correct counter-clock-wise numbers, like 350deg for -370
+	return fmod((360.0 + fmod(a,360)),360.0);
+}
+
+float angleDelta(a, b) {
+	float delta = fabs(absAngle(a) - absAngle(b));
+	float sign = absAngle(a) > absAngle(b) || delta >= 180 ? -1 : 1;
+	return (180.0 - fabs(delta - 180.0)) * sign;
+}
+
 void min(float a, float b)
 {
 	return ((a) < (b)) ? (a) : (b);
+}
+
+float SqrtXXYY(float x, float y)
+{
+	return sqrt(x * x + y * y);
+}
+
+float CopySign(float a, float b)
+{
+	return b < 0 ? -abs(a) : abs(a);
+
+}
+
+void MatToQuat(vec3_t matrix[3], vec4_t q_out)
+{
+
+	float trace = matrix[0][0] + matrix[1][1] + matrix[2][2]; // I removed + 1.0f; see discussion with Ethan
+	if (trace > 0) {// I changed M_EPSILON to 0
+		float s = 0.5f / sqrtf(trace + 1.0f);
+		q_out[0] = 0.25f / s;							//w
+		q_out[1] = (matrix[2][1] - matrix[1][2]) * s;	//x
+		q_out[2] = (matrix[0][2] - matrix[2][0]) * s;	//y
+		q_out[3] = (matrix[1][0] - matrix[0][1]) * s;	//z
+	}
+	else {
+		if (matrix[0][0] > matrix[1][1] && matrix[0][0] > matrix[2][2]) {
+			float s = 2.0f * sqrtf(1.0f + matrix[0][0] - matrix[1][1] - matrix[2][2]);
+			q_out[0] = (matrix[2][1] - matrix[1][2]) / s;
+			q_out[1] = 0.25f * s;
+			q_out[2] = (matrix[0][1] + matrix[1][0]) / s;
+			q_out[3] = (matrix[0][2] + matrix[2][0]) / s;
+		}
+		else if (matrix[1][1] > matrix[2][2]) {
+			float s = 2.0f * sqrtf(1.0f + matrix[1][1] - matrix[0][0] - matrix[2][2]);
+			q_out[0] = (matrix[0][2] - matrix[2][0]) / s;
+			q_out[1] = (matrix[0][1] + matrix[1][0]) / s;
+			q_out[2] = 0.25f * s;
+			q_out[3] = (matrix[1][2] + matrix[2][1]) / s;
+		}
+		else {
+			float s = 2.0f * sqrtf(1.0f + matrix[2][2] - matrix[0][0] - matrix[1][1]);
+			q_out[0] = (matrix[1][0] - matrix[0][1]) / s;
+			q_out[1] = (matrix[0][2] + matrix[2][0]) / s;
+			q_out[2] = (matrix[1][2] + matrix[2][1]) / s;
+			q_out[3] = 0.25f * s;
+		}	
+	}
+
+	Con_Printf("Quaternion: w: %.3f x: %.3f y: %.3f z: %.3f\n", q_out[0], q_out[1], q_out[2], q_out[3]);
+}
+
+void EulerToQuat(vec3_t eul, vec4_t out)
+{
+	// Assuming the angles are in radians.
+	double c1 = cos(eul[YAW]);
+	double s1 = sin(eul[YAW]);
+	double c2 = cos(eul[PITCH]);
+	double s2 = sin(eul[PITCH]);
+	double c3 = cos(eul[ROLL]);
+	double s3 = sin(eul[ROLL]);
+	out[0] = sqrt(1.0 + c1 * c2 + c1 * c3 - s1 * s2 * s3 + c2 * c3) / 2.0;
+	double w4 = (4.0 * out[0]);
+	out[1] = (c2 * s3 + c1 * s3 + s1 * s2 * c3) / w4;
+	out[2] = (s1 * c2 + s1 * c3 + c1 * s2 * s3) / w4;
+	out[3] = (-s1 * s3 + c1 * s2 * c3 + s2) / w4;
+}
+
+void QuatToEuler(vec4_t quat, vec3_t out)
+{
+	//ROLL
+	float sinr_cosp = 2 * (quat[0] * quat[1]);
+	float cosr_cosp = 1 - 2 * (quat[1] * quat[1] + quat[2] * quat[2]);
+	out[ROLL] = atan2(sinr_cosp, cosr_cosp);
+
+	//PITCH
+	float  sinp = 2 * (quat[0] * quat[2] - quat[3] * quat[1]);
+	if (abs(sinp) >= 1)
+	{
+		out[PITCH] = copysign(M_PI / 2, sinp);
+	}
+	else
+	{
+		out[PITCH] = asin(sinp);
+	}
+
+	//YAW
+	float siny_cosp = 2 * (quat[0] * quat[3] + quat[1] * quat[2]);
+	float cosy_cosp = 1 - 2 * (quat[2] * quat[2] + quat[3] * quat[3]);
+
+	out[YAW] = atan2(siny_cosp, cosy_cosp);
+
+	for (int i = 0; i < 3; i++)
+	{
+		out[i] = RAD2DEG(out[i]);
+	}
+}
+
+void MatToEuler(vec3_t matrix[3], vec3_t out)
+{
+	vec3_t euler;
+	vec3_t r_matrix[3];
+
+	r_matrix[0][0] = matrix[0][ROLL];
+	r_matrix[1][0] = matrix[1][ROLL];
+	r_matrix[2][0] = matrix[2][ROLL];
+	r_matrix[0][1] = matrix[0][PITCH];
+	r_matrix[1][1] = matrix[1][PITCH];
+	r_matrix[2][1] = matrix[2][PITCH];
+	r_matrix[0][2] = matrix[0][YAW];
+	r_matrix[1][2] = matrix[1][YAW];
+	r_matrix[2][2] = matrix[2][YAW];
+
+
+		euler[1] = asin(-CLAMP(-1, r_matrix[2][0],1));
+
+		if (abs(r_matrix[1][0]) < 0.9999999) {
+
+			euler[0] = atan2(r_matrix[2][1], r_matrix[2][2]);
+			euler[2] = atan2(r_matrix[1][0], r_matrix[1][1]);
+
+		}
+		else {
+
+			euler[0] = 0;
+			euler[2] = atan2(-r_matrix[0][1], r_matrix[1][1]);
+
+		}
+
+	Con_Printf("r_matrix:\n %.3f | %.3f | %.3f\n", r_matrix[0][0], r_matrix[0][1], r_matrix[0][2]);
+	Con_Printf("%.3f | %.3f | %.3f\n", r_matrix[1][0], r_matrix[1][1], r_matrix[1][2]);
+	Con_Printf("%.3f | %.3f | %.3f\n", r_matrix[2][0], r_matrix[2][1], r_matrix[2][2]);
+
+
+	out[0] = RAD2DEG(euler[2]);
+	out[1] = RAD2DEG(euler[1]);
+	out[2] = RAD2DEG(euler[0]);
 }

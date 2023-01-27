@@ -23,6 +23,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
+#define	LL(x) x=LittleLong(x);
+
+char* Q_strlwr(char* s1) {
+	char* s;
+
+	s = s1;
+	while (*s) {
+		*s = tolower(*s);
+		s++;
+	}
+	return s1;
+}
+
 
 /*
 =================================================================
@@ -251,6 +264,8 @@ void GLMesh_LoadVertexBuffer (qmodel_t *m, aliashdr_t *mainhdr)
 					xyz[v].normal[1] = 127 * r_avertexnormals[tv->lightnormalindex][1];
 					xyz[v].normal[2] = 127 * r_avertexnormals[tv->lightnormalindex][2];
 					xyz[v].normal[3] = 0;	// unused; for 4-byte alignment
+
+
 				}
 			}
 			break;
@@ -298,11 +313,12 @@ void GLMesh_LoadVertexBuffer (qmodel_t *m, aliashdr_t *mainhdr)
 					// map the normal coordinates in [-1..1] to [-127..127] and store in an unsigned char.
 					// this introduces some error (less than 0.004), but the normals were very coarse
 					// to begin with
-					lat = (float)tv->latlong[0] * (2 * M_PI)*(1.0 / 255.0);
-					lng = (float)tv->latlong[1] * (2 * M_PI)*(1.0 / 255.0);
-					xyz[v].normal[0] = 127 * cos ( lng ) * sin ( lat );
-					xyz[v].normal[1] = 127 * sin ( lng ) * sin ( lat );
-					xyz[v].normal[2] = 127 * cos ( lat );
+					lat = (float)((tv->normal >> 8) & 255) * PI_DIV_255;
+					lng = (float)(tv->normal & 255) * PI_DIV_255;
+					xyz[v].normal[0] = 127 * cos ( lat ) * sin ( lng );
+					xyz[v].normal[1] = 127 * sin ( lat ) * sin ( lng );
+					xyz[v].normal[2] = 127 * cos ( lng ); //lat
+
 					xyz[v].normal[3] = 0;	// unused; for 4-byte alignment
 				}
 			}
@@ -454,91 +470,59 @@ void GLMesh_DeleteVertexBuffers (void)
 	GL_ClearBufferBindings ();
 }
 
-
-
-
-
-
 //from gl_model.c
 extern char	loadname[];	// for hunk tags
 void Mod_CalcAliasBounds (aliashdr_t *a);
 
+/*
+================
+R_GetTag
+================
+*/
+//static md3Tag_t* R_GetTag(md3Header_t* mod, int frame, const char* tagName) {
+md3Tag_t* R_GetTag(md3Header_t * mod, int frame, const char* tagName) {
+	md3Tag_t* tag;
+	int				i;
 
-#define MD3_VERSION 15
-//structures from Tenebrae
-typedef struct {
-	int			ident;
-	int			version;
+	if (frame >= mod->numFrames) {
+		// it is possible to have a bad frame while changing models, so don't error
+		frame = mod->numFrames - 1;
+	}
 
-	char		name[64];
+	tag = (md3Tag_t*)((byte*)mod + mod->ofsTags) + frame * mod->numTags;
+	for (i = 0; i < mod->numTags; i++, tag++) {
+		if (!strcmp(tag->name, tagName)) {
+			return tag;	// found it
+		}
+	}
 
-	int			flags;	//assumed to match quake1 models, for lack of somewhere better.
+	return NULL;
+}
 
-	int			numFrames;
-	int			numTags;
-	int			numSurfaces;
+/*
+================
+R_GetMD3XTag
+================
+*/
+//static md3Tag_t* R_GetTag(md3Header_t* mod, int frame, const char* tagName) {
+md3xTag_t* R_GetMD3XTag(md3Header_t* mod, int frame, const char* tagName) {
+	md3xTag_t* tag;
+	int				i;
 
-	int			numSkins;
+	if (frame >= mod->numFrames) {
+		// it is possible to have a bad frame while changing models, so don't error
+		frame = mod->numFrames - 1;
+	}
 
-	int			ofsFrames;
-	int			ofsTags;
-	int			ofsSurfaces;
-	int			ofsEnd;
-} md3Header_t;
+	tag = (md3xTag_t*)((byte*)mod + mod->ofsTags) + frame * mod->numTags;
+	for (i = 0; i < mod->numTags; i++, tag++) {
+		if (!strcmp(tag->name, tagName)) {
+			return tag;	// found it
+		}
+	}
 
-//then has header->numFrames of these at header->ofs_Frames
-typedef struct md3Frame_s {
-	vec3_t		bounds[2];
-	vec3_t		localOrigin;
-	float		radius;
-	char		name[16];
-} md3Frame_t;
-
-//there are header->numSurfaces of these at header->ofsSurfaces, following from ofsEnd
-typedef struct {
-	int		ident;				//
-
-	char	name[64];	// polyset name
-
-	int		flags;
-	int		numFrames;			// all surfaces in a model should have the same
-
-	int		numShaders;			// all surfaces in a model should have the same
-	int		numVerts;
-
-	int		numTriangles;
-	int		ofsTriangles;
-
-	int		ofsShaders;			// offset from start of md3Surface_t
-	int		ofsSt;				// texture coords are common for all frames
-	int		ofsXyzNormals;		// numVerts * numFrames
-
-	int		ofsEnd;				// next surface follows
-} md3Surface_t;
-
-//at surf+surf->ofsXyzNormals
-/*typedef struct {
-	short		xyz[3];
-	byte		latlong[2];
-} md3XyzNormal_t;*/
-
-//surf->numTriangles at surf+surf->ofsTriangles
-typedef struct {
-	int			indexes[3];
-} md3Triangle_t;
-
-//surf->numVerts at surf+surf->ofsSt
-typedef struct {
-	float		s;
-	float		t;
-} md3St_t;
-
-typedef struct {
-	char			name[64];
-	int				shaderIndex;
-} md3Shader_t;
-
-
+	return NULL;
+}
 
 void Mod_LoadMD3Model (qmodel_t *mod, void *buffer)
 {
@@ -546,6 +530,7 @@ void Mod_LoadMD3Model (qmodel_t *mod, void *buffer)
 	md3Surface_t		*pinsurface;
 	md3Frame_t			*pinframes;
 	md3Triangle_t		*pintriangle;
+	md3Tag_t			*tag;
 	unsigned short		*poutindexes;
 	md3XyzNormal_t		*pinvert;
 	md3XyzNormal_t		*poutvert;
@@ -557,27 +542,129 @@ void Mod_LoadMD3Model (qmodel_t *mod, void *buffer)
 	int					ival, j;
 	int					numsurfs, surf;
 	int					numframes;
-	aliashdr_t			*outhdr;
+	aliashdr_t* outhdr;
 
-	start = Hunk_LowMark ();
+	start = Hunk_LowMark();
 
-	pinheader = (md3Header_t *)buffer;
+	pinheader = (md3Header_t*)buffer;
+	size = LittleLong(pinheader->ofsEnd);
+	mod->md3[0] = Hunk_Alloc(size);
 
-	ival = LittleLong (pinheader->version);
+	//Model validation
+	ival = LittleLong(pinheader->version);
 	if (ival != MD3_VERSION)
-		Sys_Error ("%s has wrong version number (%i should be %i)",
-				 mod->name, ival, MD3_VERSION);
+		Sys_Error("%s has wrong version number (%i should be %i)",
+			mod->name, ival, MD3_VERSION);
 
-	numsurfs = LittleLong (pinheader->numSurfaces);
+	numsurfs = LittleLong(pinheader->numSurfaces);
 	numframes = LittleLong(pinheader->numFrames);
 
 	if (numframes > MAXALIASFRAMES)
-		Sys_Error ("%s has too many frames (%i vs %i)",
-				 mod->name, numframes, MAXALIASFRAMES);
+		Sys_Error("%s has too many frames (%i vs %i)",
+			mod->name, numframes, MAXALIASFRAMES);
 	if (!numsurfs)
-		Sys_Error ("%s has nosurfaces", mod->name);
+		Sys_Error("%s has nosurfaces", mod->name);
+	//---------------------------------------------
+
 
 	pinframes = (md3Frame_t*)((byte*)buffer + LittleLong(pinheader->ofsFrames));
+	//Con_Printf("Frames: %d\n", pinheader->numFrames);
+
+	memcpy(mod->md3[0], buffer, LittleLong(pinheader->ofsEnd));
+
+	LL(mod->md3[0]->ident);
+	LL(mod->md3[0]->version);
+	LL(mod->md3[0]->numFrames);
+	LL(mod->md3[0]->numTags);
+	LL(mod->md3[0]->numSurfaces);
+	LL(mod->md3[0]->ofsFrames);
+	LL(mod->md3[0]->ofsTags);
+	LL(mod->md3[0]->ofsSurfaces);
+	LL(mod->md3[0]->ofsEnd);
+
+	// swap all the frames
+	pinframes = (md3Frame_t*)((byte*)mod->md3[0] + mod->md3[0]->ofsFrames);
+	for (int i = 0; i < mod->md3[0]->numFrames; i++, pinframes++) {
+		pinframes->radius = LittleFloat(pinframes->radius);
+		for (j = 0; j < 3; j++) {
+			pinframes->bounds[0][j] = LittleFloat(pinframes->bounds[0][j]);
+			pinframes->bounds[1][j] = LittleFloat(pinframes->bounds[1][j]);
+			pinframes->localOrigin[j] = LittleFloat(pinframes->localOrigin[j]);
+		}
+	}
+
+	// swap all the tags
+	tag = (md3Tag_t *)((byte *)mod->md3[0] + mod->md3[0]->ofsTags);
+	for (int i = 0; i < mod->md3[0]->numTags * mod->md3[0]->numFrames; i++, tag++) {
+		for (j = 0; j < 3; j++) {
+			tag->origin[j] = LittleFloat(tag->origin[j]);
+			tag->axis[0][j] = LittleFloat(tag->axis[0][j]);
+			tag->axis[1][j] = LittleFloat(tag->axis[1][j]);
+			tag->axis[2][j] = LittleFloat(tag->axis[2][j]);
+		}
+	}
+
+	// swap all the surfaces
+	//From Quake 3 source code
+	pinsurface = (md3Surface_t*)((byte*)mod->md3[0] + mod->md3[0]->ofsSurfaces);
+	for (int i = 0; i < mod->md3[0]->numSurfaces; i++) {
+
+		LL(pinsurface->ident);
+		LL(pinsurface->flags);
+		LL(pinsurface->numFrames);
+		LL(pinsurface->numShaders);
+		LL(pinsurface->numTriangles);
+		LL(pinsurface->ofsTriangles);
+		LL(pinsurface->numVerts);
+		LL(pinsurface->ofsShaders);
+		LL(pinsurface->ofsSt);
+		LL(pinsurface->ofsXyzNormals);
+		LL(pinsurface->ofsEnd);
+
+		// change to surface identifier
+		pinsurface->ident = 6;
+
+		// lowercase the surface name so skin compares are faster
+		Q_strlwr(pinsurface->name);
+
+		// strip off a trailing _1 or _2
+		// this is a crutch for q3data being a mess
+		j = strlen(pinsurface->name);
+		if (j > 2 && pinsurface->name[j - 2] == '_') {
+			pinsurface->name[j - 2] = 0;
+		}
+		// swap all the triangles
+		pintriangle = (md3Triangle_t*)((byte*)pinsurface + pinsurface->ofsTriangles);
+		for (j = 0; j < pinsurface->numTriangles; j++, pintriangle++) {
+			LL(pintriangle->indexes[0]);
+			LL(pintriangle->indexes[1]);
+			LL(pintriangle->indexes[2]);
+		}
+
+		// swap all the ST
+		pinst = (md3St_t*)((byte*)pinsurface + pinsurface->ofsSt);
+		for (j = 0; j < pinsurface->numVerts; j++, pinst++) {
+			pinst->st[0] = LittleFloat(pinst->st[0]);
+			pinst->st[1] = LittleFloat(pinst->st[1]);
+		}
+
+		// swap all the XyzNormals
+		pinvert = (md3XyzNormal_t*)((byte*)pinsurface + pinsurface->ofsXyzNormals);
+		for (j = 0; j < pinsurface->numVerts * pinsurface->numFrames; j++, pinvert++)
+		{
+			pinvert->xyz[0] = LittleShort(pinvert->xyz[0]);
+			pinvert->xyz[1] = LittleShort(pinvert->xyz[1]);
+			pinvert->xyz[2] = LittleShort(pinvert->xyz[2]);
+
+			pinvert->normal = LittleShort(pinvert->normal);
+		}
+
+
+		// find the next surface
+		pinsurface = (md3Surface_t*)((byte*)pinsurface + pinsurface->ofsEnd);
+	}
+
+
 //
 // allocate space for a working header, plus all the data except the frames,
 // skin and group info
@@ -692,8 +779,9 @@ void Mod_LoadMD3Model (qmodel_t *mod, void *buffer)
 		for (j = 0; j < osurf->numverts; j++)
 		{
 			poutst[j].vertindex = j;	//how is this useful?
-			poutst[j].st[0] = pinst[j].s;
-			poutst[j].st[1] = pinst[j].t;
+			poutst[j].st[0] = pinst[j].st[0];
+			poutst[j].st[1] = pinst[j].st[1];
+			//poutst[j].st[1] = pinst[j].t;
 		}
 	}
 	GLMesh_LoadVertexBuffer (mod, outhdr);
@@ -718,6 +806,291 @@ void Mod_LoadMD3Model (qmodel_t *mod, void *buffer)
 	memcpy (mod->cache.data, outhdr, total);
 
 	Hunk_FreeToLowMark (start);
+}
+
+//MD3X model
+void Mod_LoadMD3XModel(qmodel_t* mod, void* buffer)
+{
+	md3Header_t* pinheader;
+	md3Surface_t* pinsurface;
+	md3Frame_t* pinframes;
+	md3Triangle_t* pintriangle;
+	md3xTag_t* tag;
+	unsigned short* poutindexes;
+	md3XyzNormal_t* pinvert;
+	md3XyzNormal_t* poutvert;
+	md3St_t* pinst;
+	aliasmesh_t* poutst;
+	md3Shader_t* pinshader;
+	int					size;
+	int					start, end, total;
+	int					ival, j;
+	int					numsurfs, surf;
+	int					numframes;
+	aliashdr_t* outhdr;
+
+	start = Hunk_LowMark();
+
+	pinheader = (md3Header_t*)buffer;
+	size = LittleLong(pinheader->ofsEnd);
+	mod->md3[0] = Hunk_Alloc(size);
+	Con_Printf("File size: %d\n", size);
+
+	//Model validation
+	ival = LittleLong(pinheader->version);
+	if (ival != MD3X_VERSION)
+		Sys_Error("%s has wrong version number (%i should be %i)",
+			mod->name, ival, MD3X_VERSION);
+
+	numsurfs = LittleLong(pinheader->numSurfaces);
+	numframes = LittleLong(pinheader->numFrames);
+
+	if (numframes > MAXALIASFRAMES)
+		Sys_Error("%s has too many frames (%i vs %i)",
+			mod->name, numframes, MAXALIASFRAMES);
+	if (!numsurfs)
+		Sys_Error("%s has nosurfaces", mod->name);
+	//---------------------------------------------
+
+
+	pinframes = (md3Frame_t*)((byte*)buffer + LittleLong(pinheader->ofsFrames));
+	//Con_Printf("Frames: %d\n", pinheader->numFrames);
+
+	memcpy(mod->md3[0], buffer, LittleLong(pinheader->ofsEnd));
+
+	LL(mod->md3[0]->ident);
+	LL(mod->md3[0]->version);
+	LL(mod->md3[0]->numFrames);
+	LL(mod->md3[0]->numTags);
+	LL(mod->md3[0]->numSurfaces);
+	LL(mod->md3[0]->ofsFrames);
+	LL(mod->md3[0]->ofsTags);
+	LL(mod->md3[0]->ofsSurfaces);
+	LL(mod->md3[0]->ofsEnd);
+
+	// swap all the frames
+	pinframes = (md3Frame_t*)((byte*)mod->md3[0] + mod->md3[0]->ofsFrames);
+	for (int i = 0; i < mod->md3[0]->numFrames; i++, pinframes++) {
+		pinframes->radius = LittleFloat(pinframes->radius);
+		for (j = 0; j < 3; j++) {
+			pinframes->bounds[0][j] = LittleFloat(pinframes->bounds[0][j]);
+			pinframes->bounds[1][j] = LittleFloat(pinframes->bounds[1][j]);
+			pinframes->localOrigin[j] = LittleFloat(pinframes->localOrigin[j]);
+		}
+	}
+
+	// swap all the tags
+	tag = (md3xTag_t*)((byte*)mod->md3[0] + mod->md3[0]->ofsTags);
+	for (int i = 0; i < mod->md3[0]->numTags * mod->md3[0]->numFrames; i++, tag++)
+	{
+		for (j = 0; j < 3; j++) {
+			tag->origin[j] = LittleFloat(tag->origin[j]);
+			tag->axis[j] = LittleFloat(tag->axis[j]);
+		}
+	}
+
+	// swap all the surfaces
+	//From Quake 3 source code
+	pinsurface = (md3Surface_t*)((byte*)mod->md3[0] + mod->md3[0]->ofsSurfaces);
+	for (int i = 0; i < mod->md3[0]->numSurfaces; i++) {
+
+		LL(pinsurface->ident);
+		LL(pinsurface->flags);
+		LL(pinsurface->numFrames);
+		LL(pinsurface->numShaders);
+		LL(pinsurface->numTriangles);
+		LL(pinsurface->ofsTriangles);
+		LL(pinsurface->numVerts);
+		LL(pinsurface->ofsShaders);
+		LL(pinsurface->ofsSt);
+		LL(pinsurface->ofsXyzNormals);
+		LL(pinsurface->ofsEnd);
+
+		// change to surface identifier
+		pinsurface->ident = 6;
+
+		// lowercase the surface name so skin compares are faster
+		Q_strlwr(pinsurface->name);
+
+		// strip off a trailing _1 or _2
+		// this is a crutch for q3data being a mess
+		j = strlen(pinsurface->name);
+		if (j > 2 && pinsurface->name[j - 2] == '_') {
+			pinsurface->name[j - 2] = 0;
+		}
+		// swap all the triangles
+		pintriangle = (md3Triangle_t*)((byte*)pinsurface + pinsurface->ofsTriangles);
+		for (j = 0; j < pinsurface->numTriangles; j++, pintriangle++) {
+			LL(pintriangle->indexes[0]);
+			LL(pintriangle->indexes[1]);
+			LL(pintriangle->indexes[2]);
+		}
+
+		// swap all the ST
+		pinst = (md3St_t*)((byte*)pinsurface + pinsurface->ofsSt);
+		for (j = 0; j < pinsurface->numVerts; j++, pinst++) {
+			pinst->st[0] = LittleFloat(pinst->st[0]);
+			pinst->st[1] = LittleFloat(pinst->st[1]);
+		}
+
+		// swap all the XyzNormals
+		pinvert = (md3XyzNormal_t*)((byte*)pinsurface + pinsurface->ofsXyzNormals);
+		for (j = 0; j < pinsurface->numVerts * pinsurface->numFrames; j++, pinvert++)
+		{
+			pinvert->xyz[0] = LittleShort(pinvert->xyz[0]);
+			pinvert->xyz[1] = LittleShort(pinvert->xyz[1]);
+			pinvert->xyz[2] = LittleShort(pinvert->xyz[2]);
+
+			pinvert->normal = LittleShort(pinvert->normal);
+		}
+
+
+		// find the next surface
+		pinsurface = (md3Surface_t*)((byte*)pinsurface + pinsurface->ofsEnd);
+	}
+
+
+	//
+	// allocate space for a working header, plus all the data except the frames,
+	// skin and group info
+	//
+	size = sizeof(aliashdr_t) + (numframes - 1) * sizeof(outhdr->frames[0]);
+	outhdr = (aliashdr_t*)Hunk_AllocName(size * numsurfs, loadname);
+
+	for (surf = 0, pinsurface = (md3Surface_t*)((byte*)buffer + LittleLong(pinheader->ofsSurfaces)); surf < numsurfs; surf++, pinsurface = (md3Surface_t*)((byte*)pinsurface + LittleLong(pinsurface->ofsEnd)))
+	{
+		aliashdr_t* osurf = (aliashdr_t*)((byte*)outhdr + size * surf);
+		if (LittleLong(pinsurface->ident) != (('I' << 0) | ('D' << 8) | ('3' << 16) | ('X' << 24)))
+			Sys_Error("%s corrupt surface ident", mod->name);
+		if (LittleLong(pinsurface->numFrames) != numframes)
+			Sys_Error("%s mismatched framecounts", mod->name);
+
+		if (surf + 1 < numsurfs)
+			osurf->nextsurface = size;
+		else
+			osurf->nextsurface = 0;
+
+		osurf->poseverttype = PV_QUAKE3;
+		osurf->numverts_vbo = osurf->numverts = LittleLong(pinsurface->numVerts);
+		pinvert = (md3XyzNormal_t*)((byte*)pinsurface + LittleLong(pinsurface->ofsXyzNormals));
+		poutvert = (md3XyzNormal_t*)Hunk_Alloc(numframes * osurf->numverts * sizeof(*poutvert));
+		osurf->vertexes = (byte*)poutvert - (byte*)osurf;
+		for (ival = 0; ival < numframes; ival++)
+		{
+			osurf->frames[ival].firstpose = ival;
+			osurf->frames[ival].numposes = 1;
+			osurf->frames[ival].interval = 0.1;
+
+			q_strlcpy(osurf->frames[ival].name, pinframes->name, sizeof(osurf->frames[ival].name));
+			for (j = 0; j < 3; j++)
+			{	//fixme...
+				osurf->frames[ival].bboxmin.v[j] = 0;
+				osurf->frames[ival].bboxmax.v[j] = 255;
+			}
+
+			for (j = 0; j < osurf->numverts; j++)
+				poutvert[j] = pinvert[j];
+			poutvert += osurf->numverts;
+			pinvert += osurf->numverts;
+		}
+		osurf->nummorphposes = osurf->numframes = numframes;
+
+		osurf->numtris = LittleLong(pinsurface->numTriangles);
+		osurf->numindexes = osurf->numtris * 3;
+		pintriangle = (md3Triangle_t*)((byte*)pinsurface + LittleLong(pinsurface->ofsTriangles));
+		poutindexes = (unsigned short*)Hunk_Alloc(sizeof(*poutindexes) * osurf->numindexes);
+		osurf->indexes = (intptr_t)poutindexes - (intptr_t)osurf;
+		for (ival = 0; ival < osurf->numtris; ival++, pintriangle++, poutindexes += 3)
+		{
+			for (j = 0; j < 3; j++)
+				poutindexes[j] = LittleLong(pintriangle->indexes[j]);
+		}
+
+		for (j = 0; j < 3; j++)
+		{
+			osurf->scale_origin[j] = 0;
+			osurf->scale[j] = 1 / 64.0;
+		}
+
+		//guess at skin sizes
+		osurf->skinwidth = 320;
+		osurf->skinheight = 200;
+
+		//load the textures
+		if (!isDedicated)
+		{
+			pinshader = (md3Shader_t*)((byte*)pinsurface + LittleLong(pinsurface->ofsShaders));
+			osurf->numskins = LittleLong(pinsurface->numShaders);
+			for (j = 0; j < osurf->numskins; j++, pinshader++)
+			{
+				char texturename[MAX_QPATH];
+				char fullbrightname[MAX_QPATH];
+				char* ext;
+				//texture names in md3s are kinda fucked. they could be just names relative to the mdl, or full paths, or just simple shader names.
+				//our texture manager is too lame to scan all 1000 possibilities
+				if (strchr(pinshader->name, '/') || strchr(pinshader->name, '\\'))
+				{	//so if there's a path then we want to use that.
+					q_strlcpy(texturename, pinshader->name, sizeof(texturename));
+				}
+				else
+				{	//and if there's no path then we want to prefix it with our own.
+					q_strlcpy(texturename, mod->name, sizeof(texturename));
+					*(char*)COM_SkipPath(texturename) = 0;
+					//and concat the specified name
+					q_strlcat(texturename, pinshader->name, sizeof(texturename));
+				}
+				//and make sure there's no extensions. these get ignored in q3, which is kinda annoying, but this is an md3 and standards are standards (and it makes luma easier).
+				ext = (char*)COM_FileGetExtension(texturename);
+				if (*ext)
+					*--ext = 0;
+				//luma has an extra postfix.
+				q_snprintf(fullbrightname, sizeof(fullbrightname), "%s_luma", texturename);
+				osurf->gltextures[j][0] = TexMgr_LoadImage(mod, texturename, osurf->skinwidth, osurf->skinheight, SRC_EXTERNAL, NULL, texturename, 0, TEXPREF_PAD | TEXPREF_ALPHA | TEXPREF_NOBRIGHT | TEXPREF_MIPMAP);
+				osurf->fbtextures[j][0] = TexMgr_LoadImage(mod, fullbrightname, osurf->skinwidth, osurf->skinheight, SRC_EXTERNAL, NULL, texturename, 0, TEXPREF_PAD | TEXPREF_ALPHA | TEXPREF_FULLBRIGHT | TEXPREF_MIPMAP);
+				osurf->gltextures[j][3] = osurf->gltextures[j][2] = osurf->gltextures[j][1] = osurf->gltextures[j][0];
+				osurf->fbtextures[j][3] = osurf->fbtextures[j][2] = osurf->fbtextures[j][1] = osurf->fbtextures[j][0];
+			}
+			if (osurf->numskins)
+			{
+				osurf->skinwidth = osurf->gltextures[0][0]->source_width;
+				osurf->skinheight = osurf->gltextures[0][0]->source_height;
+			}
+		}
+
+		//and figure out the texture coords properly, now we know the actual sizes.
+		pinst = (md3St_t*)((byte*)pinsurface + LittleLong(pinsurface->ofsSt));
+		poutst = (aliasmesh_t*)Hunk_Alloc(sizeof(*poutst) * osurf->numverts);
+		osurf->meshdesc = (intptr_t)poutst - (intptr_t)osurf;
+		for (j = 0; j < osurf->numverts; j++)
+		{
+			poutst[j].vertindex = j;	//how is this useful?
+			poutst[j].st[0] = pinst[j].st[0];
+			poutst[j].st[1] = pinst[j].st[1];
+			//poutst[j].st[1] = pinst[j].t;
+		}
+	}
+	GLMesh_LoadVertexBuffer(mod, outhdr);
+
+	//small violation of the spec, but it seems like noone else uses it.
+	mod->flags = LittleLong(pinheader->flags);
+
+
+	mod->type = mod_alias;
+
+	Mod_CalcAliasBounds(outhdr); //johnfitz
+
+//
+// move the complete, relocatable alias model to the cache
+//
+	end = Hunk_LowMark();
+	total = end - start;
+
+	Cache_Alloc(&mod->cache, total, loadname);
+	if (!mod->cache.data)
+		return;
+	memcpy(mod->cache.data, outhdr, total);
+
+	Hunk_FreeToLowMark(start);
 }
 
 /*
@@ -1311,7 +1684,7 @@ void Mod_LoadIQMModel (qmodel_t *mod, const void *buffer)
 			osurf->frames[a].interval = LittleFloat(pinframes->framerate);
 			if (!osurf->frames[a].interval)
 				osurf->frames[a].interval = 20;
-			osurf->frames[a].interval = 1.0/osurf->frames[a].interval;
+			osurf->frames[a].interval = 1.0 / osurf->frames[a].interval;
 			if (LittleLong(pinframes->flags) & IQM_LOOP)
 				/*FIXME*/;
 
@@ -1368,7 +1741,6 @@ void Mod_LoadIQMModel (qmodel_t *mod, const void *buffer)
 	mod->type = mod_alias;
 
 	Mod_CalcAliasBounds (outhdr); //johnfitz
-
 //
 // move the complete, relocatable alias model to the cache
 //

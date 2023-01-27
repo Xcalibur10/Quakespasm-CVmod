@@ -818,15 +818,19 @@ void V_CalcRefdef(void)
 	//Camera depends on view modes!!! Orbit camera or normal?
 	if (chase_active.value <= 1)
 	{
-		//new_vangles[0] = cl.viewangles[0];
-		//new_vangles[1] = LerpAngle(r_refdef.viewangles[YAW], cl.viewangles[YAW], 1);
-		//new_vangles[2] = cl.viewangles[2];
 		VectorCopy(cl.viewangles, r_refdef.viewangles);
-		//VectorCopy(new_vangles, r_refdef.viewangles);
 	}
 	else
+	if (chase_active.value == 2)
 	{
 		r_refdef.viewangles[0] = cl.viewangles[0];
+		r_refdef.viewangles[2] = 0;
+	}
+	else
+	if (chase_active.value == 3)
+	{
+		r_refdef.viewangles[0] = cl.viewangles[0];
+		r_refdef.viewangles[2] = 0;
 	}
 	//r_refdef.viewangles[1] = 0; //FIX CAMERA! REMOVE LATER
 	

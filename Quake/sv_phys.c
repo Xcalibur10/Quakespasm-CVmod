@@ -1004,7 +1004,7 @@ void SV_WallFriction (edict_t *ent, trace_t *trace)
 	AngleVectors (ent->v.v_angle, forward, right, up);
 	d = DotProduct (trace->plane.normal, forward);
 
-	d += 0.5; //0.5 originally -- JoeyAP
+	d += 0.5; //0.5 originally -- Coffee
 	if (d >= 0)
 		return;
 
@@ -1237,7 +1237,7 @@ void SV_Physics_Client (edict_t	*ent, int num)
 			return;
 		if (!SV_CheckWater(ent) && !((int)ent->v.flags & FL_WATERJUMP))
 		{
-			if (!sv_player->onladder && !onground)
+			if (!sv_player->onladder)
 			{
 				SV_AddGravity(ent);
 			}
@@ -1474,6 +1474,7 @@ static void SV_Physics_Follow (edict_t *ent)
 	VectorAdd (e->v.angles, ent->v.v_angle, ent->v.angles);
 	SV_LinkEdict (ent, true);
 }
+
 
 /*
 ===============================================================================

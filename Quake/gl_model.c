@@ -34,7 +34,8 @@ char	loadname[32];	// for hunk tags
 void Mod_LoadSpriteModel (qmodel_t *mod, void *buffer);
 void Mod_LoadBrushModel (qmodel_t *mod, void *buffer);
 void Mod_LoadAliasModel (qmodel_t *mod, void *buffer, int pvtype);
-void Mod_LoadMD3Model (qmodel_t *mod, void *buffer);
+void Mod_LoadMD3Model(qmodel_t* mod, void* buffer);
+void Mod_LoadMD3XModel(qmodel_t* mod, void* buffer);
 void Mod_LoadMD5MeshModel (qmodel_t *mod, void *buffer);
 void Mod_LoadIQMModel (qmodel_t *mod, const void *buffer);
 qmodel_t *Mod_LoadModel (qmodel_t *mod, qboolean crash);
@@ -291,7 +292,7 @@ qmodel_t *Mod_FindName (const char *name)
 		mod->needload = true;
 		mod_numknown++;
 	}
-
+	
 	return mod;
 }
 
@@ -398,19 +399,28 @@ qmodel_t *Mod_LoadModel (qmodel_t *mod, qboolean crash)
 	switch (mod_type)
 	{
 	case IDPOLYHEADER:
-		Mod_LoadAliasModel (mod, buf, PV_QUAKE1);
+		Mod_LoadAliasModel(mod, buf, PV_QUAKE1);
 		break;
-	case (('M'<<0)+('D'<<8)+('1'<<16)+('6'<<24)):	//QF 16bit variation
-		Mod_LoadAliasModel (mod, buf, PV_QUAKEFORGE);
+	case (('M' << 0) + ('D' << 8) + ('1' << 16) + ('6' << 24)):	//QF 16bit variation
+		Mod_LoadAliasModel(mod, buf, PV_QUAKEFORGE);
 		break;
 
 	case IDSPRITEHEADER:
-		Mod_LoadSpriteModel (mod, buf);
+		Mod_LoadSpriteModel(mod, buf);
 		break;
 
-	//Spike -- md3 support
-	case (('I'<<0)+('D'<<8)+('P'<<16)+('3'<<24)):	//md3
+		//Spike -- md3 support
+	case (('I' << 0) + ('D' << 8) + ('P' << 16) + ('3' << 24)):	//md3
 		Mod_LoadMD3Model(mod, buf);
+		//Con_Printf("MD3 model name: %s\n", mod->md3[0]->name);
+		//Con_Printf("MD3 tag number: %d\n", mod->md3[0]->numTags);
+		break;
+
+		//Spike -- md3 support, Adam Pajor -- md3x support: custom md3 modification with md3 tag orientations stored as euler angles. So just a shitty hack.
+	case (('I' << 0) + ('D' << 8) + ('3' << 16) + ('X' << 24)):	//md3x
+		Mod_LoadMD3XModel(mod, buf);
+		Con_Printf("MD3x model name: %s\n", mod->md3[0]->name);
+		Con_Printf("MD3x tag number: %d\n", mod->md3[0]->numTags);
 		break;
 
 	//Spike -- md5 support
@@ -752,8 +762,10 @@ void Mod_LoadTextures (lump_t *l)
 		m->nummiptex = LittleLong (m->nummiptex);
 		nummiptex = m->nummiptex;
 	}
-	//johnfitz
 
+	//Coffee
+	LoadShadowTexture();
+	//johnfitz
 	loadmodel->numtextures = nummiptex + 2; //johnfitz -- need 2 dummy texture chains for missing textures
 	loadmodel->textures = (texture_t **) Hunk_AllocName (loadmodel->numtextures * sizeof(*loadmodel->textures) , loadname);
 
@@ -785,6 +797,7 @@ void Mod_LoadTextures (lump_t *l)
 		//johnfitz -- lots of changes
 		if (!isDedicated) //no texture uploading for dedicated server
 		{
+
 			if (!q_strncasecmp(tx->name,"sky",3)) //sky texture //also note -- was Q_strncmp, changed to match qbsp
 			{
 				if (loadmodel->bspversion == BSPVERSION_QUAKE64)
@@ -2407,7 +2420,7 @@ void Mod_MakeHull0 (void)
 		loadmodel->hulls[2].firstclipnode = loadmodel->hulls[1].firstclipnode;
 		loadmodel->hulls[2].lastclipnode = loadmodel->hulls[1].lastclipnode;
 	}
-	if (!loadmodel->hulls[3].clipnodes) //added JoeyAP (extra hull)
+	if (!loadmodel->hulls[3].clipnodes) //added Coffee (extra hull)
 	{
 		loadmodel->hulls[3].clip_maxs[2] -= loadmodel->hulls[3].clip_mins[2];
 		loadmodel->hulls[3].clip_mins[2] = 0;
@@ -2416,7 +2429,7 @@ void Mod_MakeHull0 (void)
 		loadmodel->hulls[3].lastclipnode = loadmodel->hulls[2].lastclipnode;
 
 	}
-	if (!loadmodel->hulls[4].clipnodes) //added JoeyAP (extra hull)
+	if (!loadmodel->hulls[4].clipnodes) //added Coffee (extra hull)
 	{
 		loadmodel->hulls[4].clip_maxs[2] -= loadmodel->hulls[4].clip_mins[2];
 		loadmodel->hulls[4].clip_mins[2] = 0;
@@ -2425,7 +2438,7 @@ void Mod_MakeHull0 (void)
 		loadmodel->hulls[4].lastclipnode = loadmodel->hulls[3].lastclipnode;
 
 	}
-	if (!loadmodel->hulls[5].clipnodes) //added JoeyAP (extra hull)
+	if (!loadmodel->hulls[5].clipnodes) //added Coffee (extra hull)
 	{
 		loadmodel->hulls[5].clip_maxs[2] -= loadmodel->hulls[5].clip_mins[2];
 		loadmodel->hulls[5].clip_mins[2] = 0;
@@ -3895,6 +3908,45 @@ void Mod_LoadSpriteModel (qmodel_t *mod, void *buffer)
 }
 
 //=============================================================================
+
+/*
+==================
+LoadShadowTexture
+==================
+*/
+void LoadShadowTexture()
+{
+	int		mark, width, height;
+	char	filename[]="../blobshadow";
+	byte* data;
+	qboolean nonefound = true;
+	qboolean malloced;
+
+	if (shadowblob != NULL)
+		return;
+
+	enum srcformat fmt;
+	mark = Hunk_LowMark();
+	q_snprintf(filename, sizeof(filename), "%s.tga", filename);
+	data = Image_LoadImage(filename, &width, &height, &fmt, &malloced);
+	if (data)
+	{
+		shadowblob = TexMgr_LoadImage(NULL, filename, width, height, SRC_RGBA, data, filename, 0, TEXPREF_ALPHA);
+		
+		Con_Printf("Shadowblob loaded. Format: %d \n", shadowblob->source_format);
+		nonefound = false;
+	}
+	else
+	{
+		//Con_Printf();
+		Con_Warning("Couldn't load shadow blob texture from %s!\n",filename);
+	}
+	if (malloced)
+		free(data);
+	Hunk_FreeToLowMark(mark);
+
+	//q_strlcpy(skybox_name, name, sizeof(skybox_name));
+}
 
 /*
 ================

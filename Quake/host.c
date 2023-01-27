@@ -41,7 +41,7 @@ quakeparms_t *host_parms;
 
 qboolean	host_initialized;		// true if into command execution
 
-double		host_frametime;
+double		host_frametime;			// Frame time (frame rate independet timer)
 double		realtime;				// without any filtering or bounding
 double		oldrealtime;			// last frame run
 
@@ -1050,6 +1050,7 @@ void Host_Init (void)
 	COM_InitFilesystem ();
 	Host_InitLocal ();
 	W_LoadWadFile (); //johnfitz -- filename is now hard-coded for honesty
+	LoadMaterialDefs();	//Coffee -- used for loading material types based on texture name
 	if (cls.state != ca_dedicated)
 	{
 		Key_Init ();

@@ -101,7 +101,7 @@ cvar_t	r_showbboxes = {"r_showbboxes", "0", CVAR_NONE};
 cvar_t	r_lerpmodels = {"r_lerpmodels", "1", CVAR_ARCHIVE};
 cvar_t	r_lerpmove = {"r_lerpmove", "1", CVAR_ARCHIVE};
 cvar_t	r_nolerp_list = {"r_nolerp_list", "progs/flame.mdl,progs/flame2.mdl,progs/braztall.mdl,progs/brazshrt.mdl,progs/longtrch.mdl,progs/flame_pyre.mdl,progs/v_saw.mdl,progs/v_xfist.mdl,progs/h2stuff/newfire.mdl", CVAR_NONE};
-cvar_t	r_noshadow_list = {"r_noshadow_list", "progs/flame2.mdl,progs/flame.mdl,progs/bolt1.mdl,progs/bolt2.mdl,progs/bolt3.mdl,progs/laser.mdl", CVAR_NONE};
+cvar_t	r_noshadow_list = {"r_noshadow_list", "progs/flame2.mdl,progs/flame.mdl,progs/bolt1.mdl,progs/bolt2.mdl,progs/bolt3.mdl,progs/laser.mdl,progs/xyz.md3", CVAR_NONE};
 
 extern cvar_t	r_vfog;
 //johnfitz
@@ -746,6 +746,21 @@ void R_EmitWirePoint (vec3_t origin)
 
 /*
 ================
+R_EmitLine -- johnfitz -- draws a wireframe cross shape for point entities
+================
+*/
+void R_EmitLine (vec3_t mins, vec3_t maxs)
+{
+	int size = 8;
+
+	glBegin(GL_LINES);
+	glVertex3f (mins[0], mins[1], mins[2]);
+	glVertex3f(maxs[0], maxs[1], maxs[2]);
+	glEnd();
+}
+
+/*
+================
 R_EmitWireBox -- johnfitz -- draws one axis aligned bounding box
 ================
 */
@@ -795,8 +810,11 @@ void R_ShowBoundingBoxes (void)
 	PR_SwitchQCVM(&sv.qcvm);
 	for (i=0, ed=NEXT_EDICT(qcvm->edicts) ; i<qcvm->num_edicts ; i++, ed=NEXT_EDICT(ed))
 	{
-		if (ed == sv_player)
+		if (r_showbboxes.value == 1)
+		{
+			if (ed == sv_player)
 			continue; //don't draw player's own bbox
+		}
 
 //		if (r_showbboxes.value != 2)
 //			if (!SV_VisibleToClient (sv_player, ed, sv.worldmodel))
@@ -845,6 +863,7 @@ void R_ShowTris (void)
 
 	if (r_showtris.value < 1 || r_showtris.value > 2 || cl.maxclients > 1)
 		return;
+	R_DrawTraceLines();
 
 	if (r_showtris.value == 1)
 		glDisable (GL_DEPTH_TEST);
@@ -948,7 +967,16 @@ void R_DrawShadows (void)
 		if (currententity == &cl.viewent)
 			return;
 
-		GL_DrawAliasShadow (currententity);
+		if (r_shadows.value == 1)
+		{
+			GL_DrawAliasShadow(currententity);
+		}
+
+		if (r_shadows.value == 2)
+		{
+			
+			GL_DrawAliasShadowN64(currententity);
+		}
 	}
 
 	if (gl_stencilbits)

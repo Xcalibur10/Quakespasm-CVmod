@@ -189,6 +189,7 @@ typedef struct
 #define	CONTENTS_CURRENT_DOWN	-14
 
 #define	CONTENTS_LADDER			-16
+#define	CONTENTS_SLOPE			-17 //Probably won't be used
 
 
 // !!! if this is changed, it must be changed in asm_i386.h too !!!

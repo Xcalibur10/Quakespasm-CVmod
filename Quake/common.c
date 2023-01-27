@@ -1534,6 +1534,7 @@ qboolean COM_DownloadNameOkay(const char *filename)
 		q_strcasecmp(filename, "mdl") &&
 		q_strcasecmp(filename, "iqm") &&	//in case we ever support these later
 		q_strcasecmp(filename, "md3") &&
+		q_strcasecmp(filename, "md3x") &&
 		q_strcasecmp(filename, "spr") &&
 		q_strcasecmp(filename, "spr32") &&
 		//audio formats
@@ -2134,6 +2135,7 @@ static int COM_FindFile (const char *filename, int *handle, FILE **file,
 		&& strcmp(ext, "lmp") != 0
 		&& strcmp(ext, "iqm") != 0
 		&& strcmp(ext, "md3") != 0
+		&& strcmp(ext, "md3x") != 0
 		&& strcmp(ext, "md5mesh") != 0
 		&& strcmp(ext, "md5anim") != 0
 		&& strcmp(ext, "lit") != 0

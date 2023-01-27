@@ -106,6 +106,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define U_UNUSED22		(1<<22)
 #define U_EXTEND2		(1<<23) // another byte to follow, future expansion
 //johnfitz
+#define U_TEXSPEED		(1<<24)
+#define U_ANIMLERPTIME		(1<<25)
+
 
 //johnfitz -- PROTOCOL_NEHAHRA transparency
 #define U_TRANS			(1<<15)
@@ -149,8 +152,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define UF_MODELINDEX2  (1u<<27)	/*for lame visible weapon models, like q2. just adds a second ent at the same point*/
 #define UF_GRAVITYDIR	(1u<<28)	/*yay prediction*/
 #define UF_EFFECTS2		(1u<<29)	/*effects is 16bit, or if both effects flags are set then 32bit*/
-#define UF_UNUSED2		(1u<<30)
-#define UF_UNUSED1		(1u<<31)
+#define UF_TEXSPEED		(1u<<30)	/*Was unused!!! - For per entity texture animation speeds*/
+#define UF_ANIMLERPTIME	(1u<<31)	/*Was unused!!! - For model animation lerp speed*/
 
 /*these flags are generally not deltaed as they're changing constantly*/
 #define UFP_FORWARD		(1u<<0)
@@ -242,6 +245,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define B_LARGEFRAME	(1<<1)	// frame is short instead of byte
 #define B_ALPHA			(1<<2)	// 1 byte, uses ENTALPHA_ENCODE, not sent if ENTALPHA_DEFAULT
 //johnfitz
+// 
+//Expanded
+#define B_TEXSPEED		(1<<3)
+#define B_ANIMLERPTIME (1<<4)
 
 //johnfitz -- PROTOCOL_FITZQUAKE -- alpha encoding
 #define ENTALPHA_DEFAULT	0	//entity's alpha is "default" (i.e. water obeys r_wateralpha) -- must be zero so zeroed out memory works
@@ -251,6 +258,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define ENTALPHA_DECODE(a)	(((a)==ENTALPHA_DEFAULT)?1.0f:((float)(a)-1)/(254)) //client convert to float for rendering
 #define ENTALPHA_TOSAVE(a)	(((a)==ENTALPHA_DEFAULT)?0.0f:(((a)==ENTALPHA_ZERO)?-1.0f:((float)(a)-1)/(254))) //server convert to float for savegame
 //johnfitz
+
+//Coffee -- Additional Stuff
+#define ENTTEXSPEED_DEFAULT 10
+#define ENTLERPTIME_DEFAULT 0.1
 
 // defaults for clientinfo messages
 #define	DEFAULT_VIEWHEIGHT	22
@@ -348,6 +359,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //spike -- end
 
 #define svc_setmaxturn				100
+#define svc_animlerptime			101
 
 // 2021 re-release server messages - see:
 // https://steamcommunity.com/sharedfiles/filedetails/?id=2679459726
@@ -482,7 +494,8 @@ typedef struct entity_state_s
 	unsigned char	alpha;		//johnfitz -- added
 	unsigned int	solidsize;	//for csqc prediction logic.
 	unsigned int	texspeed;
-	float			lerpspeed;
+	short			animlerptime;
+
 					#define ES_SOLID_NOT 0
 					#define ES_SOLID_BSP 31
 					#define ES_SOLID_HULL1 0x80201810

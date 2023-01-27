@@ -37,9 +37,60 @@ typedef struct
 	edict_t* passedict;
 } moveclip_t;
 
+enum materialtype
+{
+	wood,
+	metal,
+	snow,
+	concrete,
+	dirt,
+	grass,
+	tile,
+	glass,
+	flesh
+};
+
+void GetSurfaceTexture(edict_t ed, unsigned int surfidx)
+{
+	qmodel_t* mod = qcvm->GetModel(ed.v.modelindex);
+
+	if (mod && mod->type == mod_brush && !mod->needload && surfidx < (unsigned int)mod->nummodelsurfaces)
+	{
+		surfidx += mod->firstmodelsurface;
+		G_INT(OFS_RETURN) = PR_SetEngineString(mod->surfaces[surfidx].texinfo->texture->name);
+	}
+	else
+		G_INT(OFS_RETURN) = 0;
+}
+
+static materialprop_t materials[1024];
+
+void LoadMaterialDefs()
+{
+	FILE* fp;
+	
+	int i = 0;
+
+	fp = fopen("materials.def", "r");
+	if (fp == NULL)
+	{
+		Con_Printf("Error opening file\n");
+		return;
+	}
+
+	while (fscanf(fp, "%s %s", materials[i].type, materials[i].name) != EOF)
+	{
+		i++;
+		Con_Printf("Name: %s, type: %s\n", materials[i].name, materials[i].type);
+	}
+
+
+	fclose(fp);
+}
+
+
 
 int SV_HullPointContents(hull_t* hull, int num, vec3_t p);
-
 /*
 ===============================================================================
 HULL BOXES
@@ -160,6 +211,7 @@ hull_t* SV_HullForEntity(edict_t* ent, vec3_t mins, vec3_t maxs, vec3_t offset)
 		offset[1] = hull->clip_mins[1] - hull->clip_mins[1];
 		offset[2] = hull->clip_mins[2] - mins[2];
 		*/
+
 		//offset[0] = 0;
 		//offset[1] = 0;
 		//offset[2] = 0;
@@ -1165,13 +1217,14 @@ static void World_ClipToNetwork(moveclip_t* clip)
 						hull = &touch->model->hulls[2];
 
 					// calculate an offset value to center the origin
-					//VectorSubtract(hull->clip_mins, clip->mins, offset);
 					VectorSubtract(hull->clip_mins, clip->mins, offset);
-
-					/*offset[0] = hull->clip_mins[0] - hull->clip_mins[0];
-					offset[1] = hull->clip_mins[1] - hull->clip_mins[1];
-					offset[2] = hull->clip_mins[2] - clip->mins[2];
-					*/
+					
+					/*if (hull->clip_mins[0] != clip->mins[0])
+					{
+						offset[0] = 0;// hull->clip_mins[0] - hull->clip_mins[0];
+						offset[1] = 0;// hull->clip_mins[1] - hull->clip_mins[1];
+						offset[2] = hull->clip_mins[2] - clip->mins[2];
+					}*/
 
 					//offset[0] = 0;
 					//offset[1] = 0;

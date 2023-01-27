@@ -35,6 +35,8 @@ unsigned int	sv_protocol_pext2 = PEXT2_SUPPORTED_SERVER; //spike
 
 //============================================================================
 
+
+//<ENTITY_STATE>
 void SV_CalcStats(client_t *client, int *statsi, float *statsf, const char **statss)
 {
 	size_t i;
@@ -182,6 +184,7 @@ static unsigned int SVFTE_DeltaPredCalcBits(entity_state_t *from, entity_state_t
 	return bits;
 }
 
+//<ENTITY_STATE>
 static unsigned int MSGFTE_DeltaCalcBits(entity_state_t *from, entity_state_t *to)
 {
 	unsigned int bits = 0;
@@ -241,8 +244,13 @@ static unsigned int MSGFTE_DeltaCalcBits(entity_state_t *from, entity_state_t *t
 
 	if (to->scale != from->scale)
 		bits |= UF_SCALE;
+
 	if (to->alpha != from->alpha)
 		bits |= UF_ALPHA;
+	if (to->texspeed != from->texspeed)
+		bits |= UF_TEXSPEED;
+	if (to->animlerptime != from->animlerptime)
+		bits |= UF_ANIMLERPTIME;
 //	if (to->fatness != from->fatness)
 //		bits |= UF_FATNESS;
 
@@ -278,6 +286,8 @@ static unsigned int MSGFTE_DeltaCalcBits(entity_state_t *from, entity_state_t *t
 	return bits;
 }
 
+
+//<ENTITY_STATE>
 static void MSGFTE_WriteEntityUpdate(unsigned int bits, entity_state_t *state, sizebuf_t *msg, unsigned int pext2, unsigned int protocolflags)
 {
 	unsigned int predbits = 0;
@@ -488,8 +498,15 @@ static void MSGFTE_WriteEntityUpdate(unsigned int bits, entity_state_t *state, s
 
 	if (bits & UF_ALPHA)
 		MSG_WriteByte(msg, (state->alpha-1)&0xff);
-	if (bits & UF_SCALE)
+	if (bits & UF_SCALE){
 		MSG_WriteByte(msg, state->scale);
+	}
+	if (bits & UF_TEXSPEED) {
+		MSG_WriteByte(msg, state->texspeed);
+	}
+	if (bits & UF_ANIMLERPTIME) {
+		MSG_WriteByte(msg, state->animlerptime);
+	}
 /*	if (bits & UF_BONEDATA)
 	{
 		short *bonedata;
@@ -1095,11 +1112,14 @@ sendremove:
 	dev_peakstats.packetsize = q_max(msg->cursize, dev_peakstats.packetsize);
 }
 
+
+//<ENTITY_STATE>
 /*
 SV_BuildEntityState
 copies edict state into a more compact entity_state_t with all the extension fields etc sorted out and neatened up for network precision.
 note: ignores viewmodelforclient and other client-specific stuff.
 */
+
 void SV_BuildEntityState(edict_t *ent, entity_state_t *state)
 {
 	eval_t			*val;
@@ -1114,6 +1134,17 @@ void SV_BuildEntityState(edict_t *ent, entity_state_t *state)
 		state->scale = val->_float*16;
 	else
 		state->scale = 16;
+
+	if ((val = GetEdictFieldValue(ent, qcvm->extfields.texspeed)) && val->_float)
+		state->texspeed = val->_float;
+	else
+		state->texspeed = 10;
+
+	if ((val = GetEdictFieldValue(ent, qcvm->extfields.animlerptime)) && val->_float)
+		state->animlerptime = val->_float;
+	else
+		state->animlerptime = 10;
+
 	if ((val = GetEdictFieldValue(ent, qcvm->extfields.alpha)))
 		state->alpha = ENTALPHA_ENCODE(val->_float);
 	else
@@ -1285,6 +1316,7 @@ invisible:
 	snapshot_maxents = maxents;
 }
 
+//<ENTITY_STATE>
 void MSG_WriteStaticOrBaseLine(sizebuf_t *buf, int idx, entity_state_t *state, unsigned int protocol_pext2, unsigned int protocol, unsigned int protocolflags)
 {
 	int i;
@@ -1325,6 +1357,10 @@ void MSG_WriteStaticOrBaseLine(sizebuf_t *buf, int idx, entity_state_t *state, u
 					bits |= B_LARGEFRAME;
 				if (state->alpha != ENTALPHA_DEFAULT)
 					bits |= B_ALPHA;
+				if (state->texspeed != ENTTEXSPEED_DEFAULT)
+					bits |= B_TEXSPEED;
+				if (state->animlerptime != 10)
+					bits |= B_ANIMLERPTIME;
 			}
 			if (idx>=0)
 			{
@@ -1357,6 +1393,10 @@ void MSG_WriteStaticOrBaseLine(sizebuf_t *buf, int idx, entity_state_t *state, u
 		}
 		if (bits & B_ALPHA)
 			MSG_WriteByte (buf, state->alpha);
+		if (bits & B_TEXSPEED)
+			MSG_WriteByte(buf, state->texspeed);
+		if (bits & B_ANIMLERPTIME)
+			MSG_WriteByte(buf, state->animlerptime);
 	}
 }
 
@@ -1468,9 +1508,9 @@ void SV_Init (void)
 	extern	cvar_t	sv_friction;
 	extern	cvar_t	sv_edgefriction;
 	extern	cvar_t	sv_stopspeed;
-	extern	cvar_t	sv_maxspeed;	//max speed (or max forward speed) - JoeyAP
-	extern	cvar_t	sv_maxsidespeed;	//max speed (or max side speed) - JoeyAP
-	extern	cvar_t	sv_maxbackspeed;	//max speed (or max backwards speed) - JoeyAP
+	extern	cvar_t	sv_maxspeed;	//max speed (or max forward speed) - Coffee
+	extern	cvar_t	sv_maxsidespeed;	//max speed (or max side speed) - Coffee
+	extern	cvar_t	sv_maxbackspeed;	//max speed (or max backwards speed) - Coffee
 	extern	cvar_t	sv_accelerate;
 	extern	cvar_t	sv_airaccelerate;
 	extern	cvar_t	sv_nobhop;
@@ -1485,7 +1525,7 @@ void SV_Init (void)
 	extern	cvar_t	sv_sound_watersplash;	//spike - making these changable is handy...
 	extern	cvar_t	sv_sound_land;			//spike - and also mutable...
 
-	//extern	cvar_t	sv_allowmanualsave;		//JoeyAP - enables / disables manual saving
+	//extern	cvar_t	sv_allowmanualsave;		//Coffee - enables / disables manual saving
 
 
 	Cvar_RegisterVariable (&sv_maxvelocity);
@@ -1506,9 +1546,9 @@ void SV_Init (void)
 
 	Cvar_RegisterVariable (&sv_accelerate);
 
-	Cvar_RegisterVariable(&sv_nobhop); //JoeyAP
+	Cvar_RegisterVariable(&sv_nobhop); //Coffee
 	Cvar_SetCallback(&sv_nobhop, Host_Callback_Notify);
-	Cvar_RegisterVariable (&sv_airaccelerate); //JoeyAP
+	Cvar_RegisterVariable (&sv_airaccelerate); //Coffee
 	
 	Cvar_RegisterVariable (&sv_idealpitchscale);
 	Cvar_RegisterVariable (&sv_aim);
@@ -1525,7 +1565,7 @@ void SV_Init (void)
 	Cvar_RegisterVariable (&sv_sound_watersplash); //spike
 	Cvar_RegisterVariable (&sv_sound_land); //spike
 
-	//Cvar_RegisterVariable(&sv_allowmanualsave); //JoeyAP
+	//Cvar_RegisterVariable(&sv_allowmanualsave); //Coffee
 	//Cvar_SetCallback(&sv_allowmanualsave, Host_Callback_Notify);
 
 	if (isDedicated)
@@ -2397,6 +2437,8 @@ qboolean SV_VisibleToClient (edict_t *client, edict_t *test, qmodel_t *worldmode
 
 //=============================================================================
 
+
+//<ENTITY_STATE>
 /*
 =============
 SV_WriteEntitiesToClient
@@ -2432,7 +2474,7 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg)
 	for (e=1 ; e<maxedict ; e++, ent = NEXT_EDICT(ent))
 	{
 
-		if (ent != clent)	// clent is ALLWAYS sent
+		if (ent != clent)	// clent is ALWAYS sent
 		{
 			// ignore ents without visible models
 			if (!ent->v.modelindex || !PR_GetString(ent->v.model)[0])
@@ -2503,6 +2545,12 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg)
 
 		if (ent->baseline.frame != ent->v.frame)
 			bits |= U_FRAME;
+
+		if (ent->baseline.texspeed != ent->v.texspeed)
+			bits |= U_TEXSPEED;
+
+		if (ent->baseline.animlerptime != ent->v.animlerptime)
+			bits |= U_ANIMLERPTIME;
 
 		effects = ent->v.effects;
 		if (qcvm->brokeneffects && (effects & 0xf0u))
@@ -2609,6 +2657,14 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg)
 			MSG_WriteCoord (msg, ent->v.origin[2], sv.protocolflags);
 		if (bits & U_ANGLE3)
 			MSG_WriteAngle(msg, ent->v.angles[2], sv.protocolflags);
+		if (bits & U_TEXSPEED)
+		{
+			MSG_WriteByte(msg, ent->v.texspeed);
+		}
+		if (bits & U_ANIMLERPTIME)
+		{
+			MSG_WriteByte(msg, ent->animlerptime);
+		}
 
 		//spike -- nehahra protocols are awkward
 		if (sv.protocol == PROTOCOL_VERSION_BJP3)
@@ -2629,8 +2685,10 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg)
 		else
 		{
 			//johnfitz -- PROTOCOL_FITZQUAKE
-			if (bits & U_ALPHA)
+			if (bits & U_ALPHA) {
+				//MSG_WriteByte(msg, ent->alpha);
 				MSG_WriteByte(msg, ent->alpha);
+			}
 			if (bits & U_FRAME2)
 				MSG_WriteByte(msg, (int)ent->v.frame >> 8);
 			if (bits & U_MODEL2)
@@ -2638,6 +2696,7 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg)
 			if (bits & U_LERPFINISH)
 				MSG_WriteByte(msg, (byte)(Q_rint((ent->v.nextthink-qcvm->time)*255)));
 			//johnfitz
+
 		}
 	}
 
@@ -3037,7 +3096,7 @@ message buffer
 void SV_SendNop (client_t *client)
 {
 	sizebuf_t	msg;
-	byte		buf[4];
+	byte		buf[8]; //4
 
 	msg.data = buf;
 	msg.maxsize = sizeof(buf);
@@ -3379,16 +3438,20 @@ int SV_ModelIndex (const char *name)
 	return i;
 }
 
+
+//<ENTITY_STATE>
 /*
 ================
 SV_CreateBaseline
 ================
 */
+//Causally filling baseline values here!!!
 void SV_CreateBaseline (void)
 {
 	edict_t		*svent;
 	int			entnum;
 	eval_t		*val;
+
 
 	for (entnum = 0; entnum < qcvm->num_edicts; entnum++)
 	{
@@ -3406,6 +3469,24 @@ void SV_CreateBaseline (void)
 		VectorCopy (svent->v.angles, svent->baseline.angles);
 		svent->baseline.frame = svent->v.frame;
 		svent->baseline.skin = svent->v.skin;
+
+		val = GetEdictFieldValue(svent, qcvm->extfields.texspeed); //Coffee -- texture animation speed modification support
+		if(val)
+			svent->baseline.texspeed = val->_float;
+		else
+			svent->baseline.texspeed = svent->texspeed;
+		//Con_Printf("-->baseline texspeed: %d\n: ", svent->baseline.texspeed);
+
+		val = GetEdictFieldValue(svent, qcvm->extfields.animlerptime); //Coffee -- animation lerp speed modification support
+		if (val)
+		{
+			svent->baseline.animlerptime = val->_float;
+		}
+		else
+			svent->baseline.animlerptime = svent->v.animlerptime;
+		//Con_Printf("baseline animlerp: %d", svent->baseline.animlerptime);
+
+
 		if (entnum > 0 && entnum <= svs.maxclients)
 		{
 			svent->baseline.colormap = entnum;

@@ -6054,6 +6054,8 @@ enum
 	RF_WEIRDFRAMETIMES	= 1u<<6,	//change frame*time fields to need to be translated as realframeNtime='time-frameNtime' to determine which pose to use.
 						//CONSULT OTHER ENGINES BEFORE ADDING NEW FLAGS.
 };
+
+//<ENTITY_STATE>
 static void PR_addentity_internal(edict_t *ed)	//adds a csqc entity into the scene.
 {
 	qmodel_t *model = qcvm->GetModel(ed->v.modelindex);
@@ -6069,6 +6071,7 @@ static void PR_addentity_internal(edict_t *ed)	//adds a csqc entity into the sce
 			eval_t *frame2time = GetEdictFieldValue(ed, qcvm->extfields.frame2time);
 			eval_t *alpha = GetEdictFieldValue(ed, qcvm->extfields.alpha);
 			eval_t* texspeed = GetEdictFieldValue(ed, qcvm->extfields.texspeed);
+			eval_t* animlerptime = GetEdictFieldValue(ed, qcvm->extfields.animlerptime);
 			eval_t *renderflags = GetEdictFieldValue(ed, qcvm->extfields.renderflags);
 			int rf = renderflags?renderflags->_float:0;
 
@@ -6077,6 +6080,9 @@ static void PR_addentity_internal(edict_t *ed)	//adds a csqc entity into the sce
 			e->model = model;
 			e->skinnum = ed->v.skin;
 			e->alpha = alpha?ENTALPHA_ENCODE(alpha->_float):ENTALPHA_DEFAULT;
+			e->texspeed = texspeed?texspeed->_float :10;
+			e->animlerptime = animlerptime ? animlerptime->_float : 0.1;
+
 
 			//can't exactly use currentpose/previous pose, as we don't know them.
 			e->lerpflags = LERP_EXPLICIT|LERP_RESETANIM|LERP_RESETMOVE;
@@ -6873,6 +6879,7 @@ enum getrenderentityfield_e
 	GE_TRAILEFFECTNUM	= 218,
 
 	GE_TEXSPEED			= 300,
+	GE_ANIMLERPTIME		= 301,
 };
 static void PF_cl_getrenderentity(void)
 {
@@ -7011,6 +7018,9 @@ static void PF_cl_getrenderentity(void)
 	case GE_TEXSPEED:
 		G_FLOAT(OFS_RETURN + 0) = cl.entities[entnum].texspeed;
 		break;
+	case GE_ANIMLERPTIME:
+		G_FLOAT(OFS_RETURN + 0) = cl.entities[entnum].animlerptime;
+		break;
 	case GE_MAXENTS:
 	default:
 		Con_Printf("PF_cl_getrenderentity(,%i): not implemented\n", fldnum);
@@ -7129,22 +7139,368 @@ static void PF_ex_localsound (void)
 
 //NEW EXTENSIONS
 
-static void PF_cl_turnlimit(void)
+static void PF_ex_settexturespeed(void)
 {
-	//edict_t *ent = G_EDICT(OFS_PARM0);
-	//eval_t *val;
-	//Con_Printf("");
-	//float limit = G_FLOAT(OFS_PARM1);
-	//if ((val = GetEdictFieldValue(ent, qcvm->extfields.maxturnspeed)))
-	//	val->edict = EDICT_TO_PROG(ent);
-	//cl.maxturnspeed = ent->maxturnspeed;
-	//ent->turnspeedlimit = limit;
-
-	//return limit;
+	edict_t *ent = G_EDICT(OFS_PARM0);
+	float speed = G_FLOAT(OFS_PARM1);
+	ent->texspeed = speed;
 }
 
 
-//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/*========================MD3 TAG RELATED EXTENSIONS========================*/
+
+/*============================
+///////MD3 tag position///////
+===========================*/
+static void PF_MD3_tagorigin(void)
+{
+	char *newmodel = G_STRING(OFS_PARM0);
+	char *tag_name = G_STRING(OFS_PARM1);
+	int model_frame = G_FLOAT(OFS_PARM2);
+
+	qmodel_t	*mod;
+	mod = Mod_ForName(newmodel, false);
+
+	md3Header_t	*pinheader;
+	int		size, start;
+	byte	*buf;
+	byte	stackbuf[1024];		// avoid dirtying the cache heap
+
+	if (*mod->name == '*')
+		buf = NULL;
+	else
+	{
+		char* e;
+		char newname[MAX_QPATH];
+		buf = NULL;
+		q_strlcpy(newname, mod->name, sizeof(newname));
+		e = (char*)COM_FileGetExtension(newname);
+		if (*e)
+		{
+			q_strlcpy(e, com_token, sizeof(newname) - (e - newname));
+			buf = COM_LoadStackFile(newname, stackbuf, sizeof(stackbuf), &mod->path_id);
+		}
+		if (!buf)
+			buf = COM_LoadStackFile(mod->name, stackbuf, sizeof(stackbuf), &mod->path_id);
+	}
+	if (!buf)
+	{
+		Con_Warning("MD3_tagorigin error: Mod_LoadModel: %s not found\n", mod->name);
+		return;
+	}
+
+	start = Hunk_LowMark();
+
+	pinheader = (md3Header_t*)buf;
+	size = LittleLong(pinheader->ofsEnd);
+	mod->md3[0] = Hunk_Alloc(size);
+	memcpy(mod->md3[0], buf, LittleLong(pinheader->ofsEnd));
+	vec3_t tag_origin;
+	md3Tag_t* tag;
+
+	for (int i = 0; i < 3; i++)
+	{
+		tag_origin[i] = 0;
+	}
+
+	tag = R_GetTag(mod->md3[0], model_frame, tag_name);
+	if (tag)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			tag_origin[i] = tag->origin[i];
+		}
+	}
+
+	G_FLOAT(OFS_RETURN + 0) = tag_origin[0];
+	G_FLOAT(OFS_RETURN + 1) = tag_origin[1];
+	G_FLOAT(OFS_RETURN + 2) = tag_origin[2];
+
+	Hunk_FreeToLowMark(start);
+}
+
+/*============================
+///////MD3 tag rotation///////
+===========================*/
+static void PF_MD3_tagaxis(void)
+{
+	char* newmodel = G_STRING(OFS_PARM0);
+	char* tag_name = G_STRING(OFS_PARM1);
+	int model_frame = G_FLOAT(OFS_PARM2);
+
+	qmodel_t* mod;
+	mod = Mod_ForName(newmodel, false);
+
+	md3Header_t* pinheader;
+	int		size, start;
+	byte* buf;
+	byte	stackbuf[1024];		// avoid dirtying the cache heap
+
+	if (*mod->name == '*')
+		buf = NULL;
+	else
+	{
+		char* e;
+		char newname[MAX_QPATH];
+		buf = NULL;
+		q_strlcpy(newname, mod->name, sizeof(newname));
+		e = (char*)COM_FileGetExtension(newname);
+		if (*e)
+		{
+			q_strlcpy(e, com_token, sizeof(newname) - (e - newname));
+			buf = COM_LoadStackFile(newname, stackbuf, sizeof(stackbuf), &mod->path_id);
+		}
+		if (!buf)
+			buf = COM_LoadStackFile(mod->name, stackbuf, sizeof(stackbuf), &mod->path_id);
+	}
+	if (!buf)
+	{
+		Con_Warning("MD3_tagaxis error: Mod_LoadModel: %s not found\n", mod->name);
+		return;
+	}
+
+	start = Hunk_LowMark();
+
+	pinheader = (md3Header_t*)buf;
+	size = LittleLong(pinheader->ofsEnd);
+	mod->md3[0] = Hunk_Alloc(size);
+	memcpy(mod->md3[0], buf, LittleLong(pinheader->ofsEnd));
+	vec3_t tag_axis;
+	vec4_t tag_quat;
+	md3Tag_t* tag;
+	vec3_t euler_out;
+
+	tag = R_GetTag(mod->md3[0], model_frame, tag_name);
+	if (tag)
+	{
+		//MatToEuler(tag->axis, tag_axis);
+		MatToQuat(tag->axis, tag_quat);
+		QuatToEuler(tag_quat, tag_axis);
+
+		//MatToEuler(tag->axis, tag_axis);
+
+		for (int i = 0; i < 3; i++)
+		{
+			euler_out[i] = tag_axis[i];
+		}
+		Con_Printf("Tag angles at frame %d: %.3f, %.3f, %.3f\n", model_frame, tag_axis[0], tag_axis[1], tag_axis[2]);
+	}
+	else
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			euler_out[i] = 0;
+		}
+	}
+
+	for (int i = 0; i < 3; i++)
+	{
+		G_FLOAT(OFS_RETURN + i) = euler_out[i];
+	}
+
+	Hunk_FreeToLowMark(start);
+}
+
+
+/*============================
+///////MD3X tag position//////
+===========================*/
+static void PF_MD3X_tagorigin(void)
+{
+	char* newmodel = G_STRING(OFS_PARM0);
+	char* tag_name = G_STRING(OFS_PARM1);
+	int model_frame = G_FLOAT(OFS_PARM2);
+
+	qmodel_t* mod;
+	mod = Mod_ForName(newmodel, false);
+
+	md3Header_t* pinheader;
+	int		size, start;
+	byte* buf;
+	byte	stackbuf[1024];		// avoid dirtying the cache heap
+
+	if (*mod->name == '*')
+		buf = NULL;
+	else
+	{
+		char* e;
+		char newname[MAX_QPATH];
+		buf = NULL;
+		q_strlcpy(newname, mod->name, sizeof(newname));
+		e = (char*)COM_FileGetExtension(newname);
+		if (*e)
+		{
+			q_strlcpy(e, com_token, sizeof(newname) - (e - newname));
+			buf = COM_LoadStackFile(newname, stackbuf, sizeof(stackbuf), &mod->path_id);
+		}
+		if (!buf)
+			buf = COM_LoadStackFile(mod->name, stackbuf, sizeof(stackbuf), &mod->path_id);
+	}
+	if (!buf)
+	{
+		Con_Warning("MD3X_tagorigin error: Mod_LoadModel: %s not found\n", mod->name);
+		return;
+	}
+
+	start = Hunk_LowMark();
+
+	pinheader = (md3Header_t*)buf;
+	size = LittleLong(pinheader->ofsEnd);
+	mod->md3[0] = Hunk_Alloc(size);
+	memcpy(mod->md3[0], buf, LittleLong(pinheader->ofsEnd));
+	vec3_t tag_origin;
+	md3xTag_t* tag;
+
+	for (int i = 0; i < 3; i++)
+	{
+		tag_origin[i] = 0;
+	}
+
+	tag = R_GetMD3XTag(mod->md3[0], model_frame, tag_name);
+	if (tag)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			tag_origin[i] = tag->origin[i];
+		}
+	}
+	
+
+	G_FLOAT(OFS_RETURN + 0) = tag_origin[0];
+	G_FLOAT(OFS_RETURN + 1) = tag_origin[1];
+	G_FLOAT(OFS_RETURN + 2) = tag_origin[2];
+
+	Hunk_FreeToLowMark(start);
+}
+
+
+/*============================
+///////MD3X tag rotation//////
+===========================*/
+static void PF_MD3X_tagaxis(void)
+{
+	char* newmodel = G_STRING(OFS_PARM0);
+	char* tag_name = G_STRING(OFS_PARM1);
+	int model_frame = G_FLOAT(OFS_PARM2);
+
+	qmodel_t* mod;
+	mod = Mod_ForName(newmodel, false);
+
+	md3Header_t* pinheader;
+	int		size, start;
+	byte* buf;
+	byte	stackbuf[1024];		// avoid dirtying the cache heap
+
+	if (*mod->name == '*')
+		buf = NULL;
+	else
+	{
+		char* e;
+		char newname[MAX_QPATH];
+		buf = NULL;
+		q_strlcpy(newname, mod->name, sizeof(newname));
+		e = (char*)COM_FileGetExtension(newname);
+		if (*e)
+		{
+			q_strlcpy(e, com_token, sizeof(newname) - (e - newname));
+			buf = COM_LoadStackFile(newname, stackbuf, sizeof(stackbuf), &mod->path_id);
+		}
+		if (!buf)
+			buf = COM_LoadStackFile(mod->name, stackbuf, sizeof(stackbuf), &mod->path_id);
+	}
+	if (!buf)
+	{
+		Con_Warning("MD3X_tagaxis error: Mod_LoadModel: %s not found\n", mod->name);
+		return;
+	}
+
+	start = Hunk_LowMark();
+
+	pinheader = (md3Header_t*)buf;
+	size = LittleLong(pinheader->ofsEnd);
+	mod->md3[0] = Hunk_Alloc(size);
+	memcpy(mod->md3[0], buf, LittleLong(pinheader->ofsEnd));
+	md3xTag_t* tag;
+	vec3_t euler_out;
+
+	tag = R_GetMD3XTag(mod->md3[0], model_frame, tag_name);
+	if (tag)
+	{
+		//Rounding the values. Had a weird glitch where like .0000001 difference made the interpolation turn the longest path... yeah... looked wild.
+
+		//Return rounded values
+		euler_out[0] = round(tag->axis[0]*10000)/10000;
+		euler_out[1] = round(tag->axis[1]*10000)/10000;
+		euler_out[2] = round(tag->axis[2]*10000)/10000;
+	}
+	else
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			euler_out[i] = 0;
+		}
+	}
+
+	for (int i = 0; i < 3; i++)
+	{
+		G_FLOAT(OFS_RETURN + i) = euler_out[i];
+	}
+
+	Hunk_FreeToLowMark(start);
+}
+
+/*============================
+///////Lerp Position///////
+===========================*/
+static void PF_LerpPosition(void)
+{
+	float *pos1 = G_VECTOR(OFS_PARM0);
+	float *pos2 = G_VECTOR(OFS_PARM1);
+	float frac = G_FLOAT(OFS_PARM2);
+
+	vec3_t out;
+
+	
+
+	for (int i = 0; i < 3; i++)
+	{
+		float angle = pos1[i] * frac + pos2[i] * (1.0f - frac);
+		out[i] = LerpDegrees(pos1[i], pos2[i], frac);
+		G_FLOAT(OFS_RETURN + i) = out[i];
+	}
+}
+
+/*============================
+///////Lerp Rotation///////
+===========================*/
+static void PF_LerpRotation (void)
+{
+	float* euler1 = G_VECTOR(OFS_PARM0);
+	float* euler2 = G_VECTOR(OFS_PARM1);
+	float frac = G_FLOAT(OFS_PARM2);
+
+	vec3_t out;
+
+	for (int i = 0; i < 3; i++)
+	{
+		out[i] = LerpDegrees(euler1[i], euler2[i], frac);
+		G_FLOAT(OFS_RETURN + i) = out[i];
+	}
+}
+
+/*============================
+////////Lerpdata Blend////////
+===========================*/
+static void PF_LerpdataBlend(void)
+{
+}
+
+/*=====================================================================================================
+
+START OF QCVM EXTENSIONS
+
+=====================================================================================================*/
+
 
 //A quick note on number ranges.
 //0: automatically assigned. more complicated, but no conflicts over numbers, just names...
@@ -7595,9 +7951,15 @@ static struct
 	{"getbindmaps",		PF_NoSSQC,			PF_cl_getbindmaps,			631,	PF_cl_getbindmaps,631, "vector()", "stub."},
 	{"setbindmaps",		PF_NoSSQC,			PF_cl_setbindmaps,			632,	PF_cl_setbindmaps,632, "float(vector bm)", "stub."},
 	{"digest_hex",		PF_digest_hex,		PF_digest_hex,				639,	PF_digest_hex, 639, "string(string digest, string data, ...)"},
-	//NEW EXTENSIONS STARTING FROM 1000
-	{ "setturnlimit",		PF_cl_turnlimit,	PF_cl_turnlimit,			1000,	PF_cl_turnlimit, 1000, "void(entity e,float limit)" },
-	{ "sound2",		PF_cl_turnlimit,	PF_cl_turnlimit,			1001,	PF_cl_turnlimit, 1000, "void(entity e,float limit)" },
+	//NEW EXTENSIONS STARTING FROM 800
+	{ "texturespeed",		PF_ex_settexturespeed,	PF_ex_settexturespeed,			801,	PF_ex_settexturespeed, 801, "void(entity e,float limit)" },
+	{ "MD3_tagorigin",		PF_MD3_tagorigin,	PF_MD3_tagorigin,		802,	PF_MD3_tagorigin, 802, "void(string model,string tagname, float frame)" },
+	{ "MD3_tagaxis",		PF_MD3_tagaxis,		PF_MD3_tagaxis,			803,	PF_MD3_tagaxis, 803, "void(string model,string tagname, float frame)" },
+	{ "MD3X_tagorigin",		PF_MD3X_tagorigin,	PF_MD3X_tagorigin,		804,	PF_MD3X_tagorigin, 804, "void(string model, string tagname, float frame)" },
+	{ "MD3X_tagaxis",		PF_MD3X_tagaxis,	PF_MD3X_tagaxis,		805,	PF_MD3X_tagaxis, 805, "void(string model, string tagname, float frame)" },
+	{ "lerp_position",		PF_LerpPosition,	PF_LerpPosition,		806,	PF_LerpPosition, 806, "void(vector p1, vector p2, float frac)" },
+	{ "lerp_rotation",		PF_LerpRotation,	PF_LerpRotation,		807,	PF_LerpRotation, 807, "void(vector a1, vector a2, float frac)" },
+
 };
 
 qboolean PR_Can_Particles(unsigned int prot, unsigned int pext1, unsigned int pext2)

@@ -862,6 +862,8 @@ void IN_MouseMove(usercmd_t *cmd)
 
 	limit = cl.maxturnspeed;
 
+	//Con_Printf("host_frametime: %.4f\n", host_frametime);
+
 	total_dx = 0;
 	total_dy = 0;
 
@@ -870,11 +872,11 @@ void IN_MouseMove(usercmd_t *cmd)
 		if ((in_strafe.state & 1) || (lookstrafe.value && (in_mlook.state & 1)))
 			cmd->sidemove += m_side.value * dmx;
 		else
-			cl.viewangles[YAW] -= CLAMP(-limit, m_yaw.value * dmx * cl.csqc_sensitivity, limit); //modified by JoeyAP (added clamping)
+			cl.viewangles[YAW] -= CLAMP(-limit, m_yaw.value * dmx * cl.csqc_sensitivity, limit); //modified by Coffee (added clamping)
 	}
 	else
 	{
-		//Instead of the player, rotate only the camera!!! - JoeyAP
+		//Instead of the player, rotate only the camera!!! - Coffee
 		r_refdef.viewangles[YAW] -= m_yaw.value * dmx * cl.csqc_sensitivity;
 	}
 

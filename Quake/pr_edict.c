@@ -99,6 +99,8 @@ edict_t *ED_Alloc (void)
 	return e;
 }
 
+
+//<ENTITY_STATE>
 /*
 =================
 ED_Free
@@ -123,6 +125,9 @@ void ED_Free (edict_t *ed)
 	ed->v.nextthink = -1;
 	ed->v.solid = 0;
 	ed->alpha = ENTALPHA_DEFAULT; //johnfitz -- reset alpha for next entity
+	ed->texspeed = 10;
+	ed->animlerptime = 10;
+
 
 	ed->freetime = qcvm->time;
 }
@@ -1145,6 +1150,8 @@ void PR_ClearProgs(qcvm_t *vm)
 	PR_SwitchQCVM(oldvm);
 }
 
+
+//<ENTITY_STATE>
 //makes sure extension fields are actually registered so they can be used for mappers without qc changes. eg so scale can be used.
 static void PR_MergeEngineFieldDefs (void)
 {

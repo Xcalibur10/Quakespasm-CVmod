@@ -467,4 +467,9 @@
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\..\..\Games\GOG Games\Quakemod\blobshadow.png_">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
 </Project>

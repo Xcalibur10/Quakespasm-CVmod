@@ -364,9 +364,8 @@ void SV_AirMove(void)
 	int			i;
 	vec3_t		wishvel, wishdir, maxvel;
 	float		wishspeed, maxspeed;
-	vec3_t		wish_vec;	//JoeyAP - wish velocity using max forward, backward and sideway speeds
 	float		fmove, smove;
-	vec3_t		move_vec, input_norm, max_norm;
+	vec3_t		move_vec, input_norm;
 
 	AngleVectors(sv_player->v.angles, forward, right, up);
 

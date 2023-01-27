@@ -432,9 +432,24 @@ static unsigned int CLFTE_ReadDelta(unsigned int entnum, entity_state_t *news, c
 		news->eflags = MSG_ReadByte();
 
 	if (bits & UF_ALPHA)
-		news->alpha = (MSG_ReadByte()+1)&0xff;
+	{
+		news->alpha = (MSG_ReadByte() + 1) & 0xff;
+	}
 	if (bits & UF_SCALE)
+	{
 		news->scale = MSG_ReadByte();
+	}
+
+	if (bits & UF_TEXSPEED)
+	{
+		news->texspeed = MSG_ReadByte();
+	}
+
+	if (bits & UF_ANIMLERPTIME)
+	{
+		news->animlerptime = MSG_ReadByte();
+	}
+
 	if (bits & UF_BONEDATA)
 	{
 		unsigned char fl = MSG_ReadByte();
@@ -535,14 +550,17 @@ static unsigned int CLFTE_ReadDelta(unsigned int entnum, entity_state_t *news, c
 		/*news->gravitydir[0] =*/ MSG_ReadByte();
 		/*news->gravitydir[1] =*/ MSG_ReadByte();
 	}
+
+	//THESE ARE NOT UNUSED ANYMORE!!! For animation lerp speeds and texture animation speeds
+	/*
 	if (bits & UF_UNUSED2)
 	{
-		Host_EndGame("UF_UNUSED2 bit\n");
+		//Host_EndGame("UF_UNUSED2 bit\n");
 	}
 	if (bits & UF_UNUSED1)
 	{
 		Host_EndGame("UF_UNUSED1 bit\n");
-	}
+	}*/
 	return bits;
 }
 static void CLFTE_ParseBaseline(entity_state_t *es)
@@ -606,6 +624,8 @@ static void CL_EntitiesDeltaed(void)
 			ent->lerpflags &= ~LERP_MOVESTEP;
 
 		ent->alpha = ent->netstate.alpha;
+		ent->texspeed = ent->netstate.texspeed;
+		ent->animlerptime = ent->netstate.animlerptime;
 /*		if (bits & U_LERPFINISH)
 		{
 			ent->lerpfinish = ent->msgtime + ((float)(MSG_ReadByte()) / 255);
@@ -932,13 +952,14 @@ void CLFTE_ParseCSQCEntitiesUpdate(void)
 #define E5_UNUSED30 (1<<30)
 #define E5_EXTEND4 (1<<31)
 #define E5_TEXSPEED (1<<32)
+#define E5_ANIMLERPTIME (1<<33)
 
 #define E5_ALLUNUSED (E5_UNUSED27|E5_UNUSED28|E5_UNUSED29|E5_UNUSED30|E5_EXTEND4)
 #define E5_ALLUNSUPPORTED (E5_LIGHT|E5_GLOW|E5_GLOWMOD|E5_COMPLEXANIMATION)
 
 static void CLDP_ReadDelta(unsigned int entnum, entity_state_t *s, const entity_state_t *olds, const entity_state_t *baseline)
 {
-	unsigned int bits = MSG_ReadByte();
+	unsigned long bits = MSG_ReadByte();
 	if (bits & E5_EXTEND1)
 	{
 		bits |= MSG_ReadByte() << 8;
@@ -1034,7 +1055,10 @@ static void CLDP_ReadDelta(unsigned int entnum, entity_state_t *s, const entity_
 	if (bits & E5_ALPHA)
 		s->alpha = (MSG_ReadByte()+1)&0xff;
 	if (bits & E5_SCALE)
+	{
 		s->scale = MSG_ReadByte();
+		//Con_Printf("s->texspeed%f\n", s->texspeed);
+	}
 	if (bits & E5_COLORMAP)
 		s->colormap = MSG_ReadByte();
 	if (bits & E5_ATTACHMENT)
@@ -1094,9 +1118,6 @@ static void CLDP_ReadDelta(unsigned int entnum, entity_state_t *s, const entity_
 	}
 	if (bits & E5_TRAILEFFECTNUM)
 		s->traileffectnum = MSG_ReadShort();
-
-	if (bits & E5_TRAILEFFECTNUM)
-		s->texspeed = MSG_ReadShort();
 }
 
 //dpp5-7 compat
@@ -1636,6 +1657,15 @@ static void CL_ParseUpdate (int bits)
 #define netstate_start offsetof(entity_state_t, scale)
 	memcpy((char*)&ent->netstate + offsetof(entity_state_t, modelindex), (const char*)&ent->baseline + offsetof(entity_state_t, modelindex), sizeof(ent->baseline) - offsetof(entity_state_t, modelindex));
 
+	if (bits & U_TEXSPEED)
+		ent->texspeed = MSG_ReadByte();
+	else
+		ent->texspeed = 10;
+	if (bits & U_ANIMLERPTIME)
+		ent->animlerptime = MSG_ReadByte();
+	else
+		ent->animlerptime = 10;
+
 	if (bits & U_MODEL)
 	{
 		if (cl.protocol == PROTOCOL_VERSION_BJP3)
@@ -1715,11 +1745,16 @@ static void CL_ParseUpdate (int bits)
 	if (cl.protocol == PROTOCOL_FITZQUAKE || cl.protocol == PROTOCOL_RMQ)
 	{
 		if (bits & U_ALPHA)
+		{
 			ent->alpha = MSG_ReadByte();
+		}
 		else
+		{
 			ent->alpha = ent->baseline.alpha;
-		if (bits & U_SCALE)
-			ent->netstate.scale = MSG_ReadByte(); // PROTOCOL_RMQ
+		}
+		if (bits & U_SCALE) {
+			ent->netstate.texspeed = MSG_ReadByte(); // PROTOCOL_RMQ
+		}
 		if (bits & U_FRAME2)
 			ent->frame = (ent->frame & 0x00FF) | (MSG_ReadByte() << 8);
 		if (bits & U_MODEL2)
@@ -1834,8 +1869,10 @@ static void CL_ParseBaseline (entity_t *ent, int version) //johnfitz -- added ar
 		ent->baseline.origin[i] = MSG_ReadCoord (cl.protocolflags);
 		ent->baseline.angles[i] = MSG_ReadAngle (cl.protocolflags);
 	}
-
+	
 	ent->baseline.alpha = (bits & B_ALPHA) ? MSG_ReadByte() : ENTALPHA_DEFAULT; //johnfitz -- PROTOCOL_FITZQUAKE
+	ent->baseline.texspeed = (bits & B_TEXSPEED) ? MSG_ReadByte() : 10; //Coffee -- Texspeed
+	ent->baseline.animlerptime = (bits & B_ANIMLERPTIME) ? MSG_ReadByte() : 10; //Coffee -- Animation Lerp Time
 }
 
 
@@ -2046,6 +2083,11 @@ static void CL_ParseStatic (int version) //johnfitz -- added a parameter
 	ent->skinnum = ent->baseline.skin;
 	ent->effects = ent->baseline.effects;
 	ent->alpha = ent->baseline.alpha; //johnfitz -- alpha
+	//-------------------------------------------------------------------
+	ent->texspeed = ent->baseline.texspeed; //Coffee -- texture speed
+	ent->animlerptime = ent->baseline.animlerptime; //Coffee -- animation lerp speed
+	//Con_Printf("tex from baseline->%d\n", ent->texspeed);
+	//Con_Printf("anim from baseline->%d\n", ent->animlerptime);
 
 	VectorCopy (ent->baseline.origin, ent->origin);
 	VectorCopy (ent->baseline.angles, ent->angles);
@@ -2945,11 +2987,21 @@ void CL_ParseServerMessage (void)
 
 		case svc_setmaxturn:
 			cl.maxturnspeed = MSG_ReadByte();
-			//cl.looptrack = MSG_ReadByte();
 			break;
+		int e;
+		int id;
+		entity_t *ent;
+
+		//unused - set lerp time between frames in seconds (default: 0.1)
+		case svc_animlerptime:	
+			id = MSG_ReadByte();
+			e = MSG_ReadByte();
+
+			ent = CL_EntityNum(id);
+			ent->animlerptime = e;
+			break;
+			
 		}
-
-
 
 		lastcmd = cmd; //johnfitz
 	}

@@ -30,6 +30,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <unistd.h>
 #endif
 
+#define OneTFFth 1/255;
+
 // we need to declare some mouse variables here, because the menu system
 // references them even when on a unix system.
 
@@ -1268,13 +1270,13 @@ void CL_SendCmd (void)
 
 	//CL_BaseMove(&cmd);
 	// get basic movement from keyboard
-	if (chase_active.value <= 1)
+
+	switch ((int)chase_active.value)
 	{
-		CL_BaseMove(&cmd);
-	}
-	else
-	{
-		CL_BaseMoveOrbit(&cmd);
+		case 1: CL_BaseMove(&cmd); break;
+		case 2: CL_BaseMoveOrbit(&cmd);  break;
+		case 3: CL_BaseMoveGoat(&cmd);  break;
+		default: CL_BaseMove(&cmd); break;
 	}
 
 	// allow mice or other external controllers to add to the move

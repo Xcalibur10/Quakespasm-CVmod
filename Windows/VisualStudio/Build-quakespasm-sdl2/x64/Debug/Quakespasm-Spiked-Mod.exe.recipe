@@ -5,7 +5,11 @@
       <FullPath>D:\Games\GOG Games\Quakemod\Quakespasm-Spiked-Mod.exe</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
-  <ContentFiles />
+  <ContentFiles>
+    <ContentFile>
+      <FullPath>D:\Games\GOG Games\Quakemod\blobshadow.png_</FullPath>
+    </ContentFile>
+  </ContentFiles>
   <SatelliteDlls />
   <NonRecipeFileRefs />
 </Project>

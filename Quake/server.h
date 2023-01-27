@@ -243,6 +243,7 @@ typedef struct client_s
 #define	MOVETYPE_BOUNCE			10
 #define	MOVETYPE_EXT_BOUNCEMISSILE	11		// ifdefed out in the vanilla code, stomped on by 2021 rerelease gibs
 #define MOVETYPE_EXT_FOLLOW		12
+#define MOVETYPE_FOLLOW_OFFSET	20
 
 // edict->solid values
 #define	SOLID_NOT				0		// no interaction with other objects

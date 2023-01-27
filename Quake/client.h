@@ -220,6 +220,7 @@ typedef struct
 	float		last_received_message;	// (realtime) for net trouble icon
 
 	float		maxturnspeed;
+	short		animlerptime;	//Animation lerping time. Given in fps (default is 10 fps, 0.1 seconds to the next frame, same as default nextthink)
 
 //
 // information that is static for the entire time connected to a server
@@ -416,6 +417,7 @@ int  CL_ReadFromServer (void);
 void CL_AdjustAngles (void);
 void CL_BaseMove (usercmd_t *cmd);
 void CL_BaseMoveOrbit(usercmd_t* cmd);
+void CL_BaseMoveGoat(usercmd_t* cmd);
 void CL_FinishMove(usercmd_t *cmd);
 
 void CL_Download_Data(void);

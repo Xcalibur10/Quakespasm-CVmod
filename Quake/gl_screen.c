@@ -575,7 +575,7 @@ float  movementspeed;
 
 /*
 ==============
-showspeed -- Shows the movement velocity on the middle of the screen -- JoeyAP
+showspeed -- Shows the movement velocity on the middle of the screen -- Coffee
 ==============
 */
 void ShowSpeed(void)
@@ -1302,7 +1302,7 @@ void SCR_UpdateScreen (void)
 		SCR_DrawFPS (); //johnfitz
 		SCR_DrawClock (); //johnfitz
 		SCR_DrawConsole ();
-		ShowSpeed(); //JoeyAP
+		ShowSpeed(); //Coffee
 		M_Draw ();
 	}
 

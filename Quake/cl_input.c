@@ -343,6 +343,7 @@ void CL_AdjustAngles (void)
 {
 	float	speed;
 	float	up, down;
+	float	limit = cl.maxturnspeed;
 
 	if ((in_speed.state & 1) ^ (cl_alwaysrun.value != 0.0))
 		speed = host_frametime * cl_anglespeedkey.value;
@@ -351,8 +352,8 @@ void CL_AdjustAngles (void)
 
 	if (!(in_strafe.state & 1))
 	{
-		cl.viewangles[YAW] -= speed*cl_yawspeed.value*CL_KeyState (&in_right);
-		cl.viewangles[YAW] += speed*cl_yawspeed.value*CL_KeyState (&in_left);
+		cl.viewangles[YAW] -= CLAMP(-limit,speed*cl_yawspeed.value*CL_KeyState (&in_right),limit);
+		cl.viewangles[YAW] += CLAMP(-limit,speed*cl_yawspeed.value*CL_KeyState (&in_left),limit);
 		cl.viewangles[YAW] = anglemod(cl.viewangles[YAW]);
 	}
 
@@ -439,6 +440,11 @@ void CL_BaseMove (usercmd_t *cmd)
 }
 
 
+float dir_frac = 1;
+float targ_yaw = 0;
+float temp_yaw = 0;
+unsigned char do_turn = 0;
+int turn_dir = 0;
 
 /*
 ================
@@ -461,9 +467,6 @@ void CL_BaseMoveOrbit(usercmd_t* cmd)
 	float rd_yaw = anglemod(r_refdef.viewangles[YAW]);
 	rd_yaw = (rd_yaw-180) * (2 * M_PI / 360); //To radian... 
 
-
-
-
 	float n_yaw = 0;
 
 	vec3_t cam_dir; //Camera direction vector
@@ -476,16 +479,9 @@ void CL_BaseMoveOrbit(usercmd_t* cmd)
 		cam_dir[i] = r_refdef.viewangles[i];
 	}
 
-
-	float ang; //Angle between camera and player
-
-
-	//ang = cam_dir[YAW] * (M_PI * 2 / 360);
 	AngleVectors(cam_dir, cam_forward, cam_right, cam_up);
 
-	//cam_fwd[0] = sin(ang);
-	//cam_fwd[1] = cos(ang);
-	//cam_fwd[2] = 0;
+
 
 	in_dir[0] = CL_KeyState(&in_back) - CL_KeyState(&in_forward);
 	in_dir[1] = CL_KeyState(&in_moveright) - CL_KeyState(&in_moveleft);
@@ -579,6 +575,93 @@ void CL_BaseMoveOrbit(usercmd_t* cmd)
 		cmd->upmove *= cl_movespeedkey.value;
 	}
 }
+
+/*
+================
+CL_BaseMoveGoat
+
+Send the intended movement message to the server
+================
+*/
+void CL_BaseMoveGoat(usercmd_t* cmd)
+{
+	Q_memset(cmd, 0, sizeof(*cmd));
+
+	//Don't dance on the floor while dead!!!
+	if (cl.stats[STAT_HEALTH] <= 0)
+	{
+		return;
+	}
+	if (cls.signon != SIGNONS)
+		return;
+
+	float cl_yaw = anglemod(cl.viewangles[YAW]);
+	float rd_yaw = anglemod(r_refdef.viewangles[YAW]);
+
+	Con_Printf("camera yaw: %.3f\n", rd_yaw);
+
+	//rd_yaw = (rd_yaw - 180) * (2 * M_PI / 360); //To radian... 
+
+	float rad_targ_yaw, rad_rd_yaw;
+	rad_targ_yaw = DEG2RAD(anglemod(targ_yaw));
+	rad_rd_yaw = DEG2RAD(anglemod(rd_yaw));
+	float diff_yaw = atan2(sin(rad_targ_yaw - rad_rd_yaw), cos(rad_targ_yaw - rad_rd_yaw));
+	diff_yaw = RAD2DEG(diff_yaw);
+	float diff_yaw_norm = diff_yaw / 180.0;
+
+	in_dir[0] = CL_KeyState(&in_back) - CL_KeyState(&in_forward);
+	in_dir[1] = CL_KeyState(&in_moveright) - CL_KeyState(&in_moveleft);
+	in_dir[2] = 0;
+
+	//Side, backward and forward movements
+	cmd->sidemove += cl_sidespeed.value * CL_KeyState(&in_moveright);
+	cmd->sidemove -= cl_sidespeed.value * CL_KeyState(&in_moveleft);
+
+	cmd->upmove += cl_upspeed.value * CL_KeyState(&in_up);
+	cmd->upmove -= cl_upspeed.value * CL_KeyState(&in_down);
+
+	if (!(in_klook.state & 1))
+	{
+		cmd->forwardmove += cl_forwardspeed.value * CL_KeyState(&in_forward) * (1 - fabs(diff_yaw_norm));
+		cmd->forwardmove -= cl_backspeed.value * CL_KeyState(&in_back) * (1 - fabs(diff_yaw_norm));
+	}
+
+	//
+	// adjust for speed key
+	//
+	if ((in_speed.state & 1) ^ (cl_alwaysrun.value != 0.0))
+	{
+		{
+			cmd->forwardmove *= cl_movespeedkey.value * (1 - fabs(diff_yaw_norm));
+			cmd->sidemove *= cl_movespeedkey.value * (1 - fabs(diff_yaw_norm));
+			cmd->upmove *= cl_movespeedkey.value * (1 - fabs(diff_yaw_norm));
+		}
+	}
+
+	float limit = cl.maxturnspeed;
+	Con_Printf("Yaw Diff: %.3f | Limit: %.3f\n", fabs(diff_yaw_norm), limit);
+
+	if (!(in_dir[0] == 0 && in_dir[1] == 0))
+	{
+		targ_yaw -= CLAMP(-limit, diff_yaw*5, limit);
+	}
+
+
+	
+
+	Con_Printf("targ_yaw: %.3f | rd_yaw: %.3f | yaw_diff: %.3f\ | turn_dir: %d\n", RAD2DEG(rad_targ_yaw), RAD2DEG(rad_rd_yaw), diff_yaw, turn_dir);
+	
+
+	
+	//Con_Printf("dir_frac: %.3f\n", dir_frac);
+
+	cl.viewangles[YAW] = targ_yaw;
+
+	cmd->viewangles[YAW] = cl.viewangles[YAW];
+	VectorCopy(cl.viewangles, cmd->viewangles);
+}
+
+
 
 void CL_FinishMove(usercmd_t *cmd)
 {

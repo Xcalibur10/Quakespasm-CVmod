@@ -265,7 +265,6 @@ typedef struct
 	mspriteframedesc_t	frames[1];
 } msprite_t;
 
-
 /*
 ==============================================================================
 
@@ -298,7 +297,7 @@ typedef struct meshxyz_mdl16_s
 typedef struct meshxyz_md3_s
 {
 	signed short xyz[4];
-	signed char normal[4];
+	signed short normal[4];
 } meshxyz_md3_t;
 
 typedef struct meshst_s
@@ -390,7 +389,8 @@ typedef struct {
 
 typedef struct {
 	short		xyz[3];
-	byte		latlong[2];
+	short		normal;
+	//byte		latlong[2];
 } md3XyzNormal_t;
 
 typedef struct
@@ -449,6 +449,89 @@ typedef enum {mod_brush, mod_sprite, mod_alias, mod_ext_invalid} modtype_t;
 #define MOD_EMITFORWARDS 4096	//particle effect is emitted forwards, rather than downwards. why down? good question.
 //spike
 
+#define MD3_VERSION 15
+#define MD3X_VERSION 16
+
+//structures from Tenebrae
+typedef struct {
+	int			ident;
+	int			version;
+
+	char		name[MAX_QPATH];
+
+	int			flags;	//assumed to match quake1 models, for lack of somewhere better.
+
+	int			numFrames;
+	int			numTags;
+	int			numSurfaces;
+
+	int			numSkins;
+
+	int			ofsFrames;
+	int			ofsTags;	// numFrames * numTags
+	int			ofsSurfaces;
+	int			ofsEnd;
+} md3Header_t;
+
+//then has header->numFrames of these at header->ofs_Frames
+typedef struct md3Frame_s {
+	vec3_t		bounds[2];
+	vec3_t		localOrigin;
+	float		radius;
+	char		name[16];
+} md3Frame_t;
+
+typedef struct md3Tag_s {
+	char		name[MAX_QPATH];
+	vec3_t		origin;
+	vec3_t		axis[3];
+} md3Tag_t;
+
+typedef struct md3xTag_s {
+	char		name[MAX_QPATH];
+	vec3_t		origin;
+	float		axis[3];	//only euler angles instead of rotation matrix!
+} md3xTag_t;
+
+//there are header->numSurfaces of these at header->ofsSurfaces, following from ofsEnd
+typedef struct {
+	int		ident;				//
+
+	char	name[64];	// polyset name
+
+	int		flags;
+	int		numFrames;			// all surfaces in a model should have the same
+
+	int		numShaders;			// all surfaces in a model should have the same
+	int		numVerts;
+
+	int		numTriangles;
+	int		ofsTriangles;
+
+	int		ofsShaders;			// offset from start of md3Surface_t
+	int		ofsSt;				// texture coords are common for all frames
+	int		ofsXyzNormals;		// numVerts * numFrames
+
+	int		ofsEnd;				// next surface follows
+} md3Surface_t;
+
+//surf->numTriangles at surf+surf->ofsTriangles
+typedef struct {
+	int			indexes[3];
+} md3Triangle_t;
+
+//surf->numVerts at surf+surf->ofsSt
+typedef struct {
+	float		st[2];
+	//float		t;
+} md3St_t;
+
+typedef struct {
+	char			name[MAX_QPATH];
+	int				shaderIndex;
+} md3Shader_t;
+
+
 typedef struct qmodel_s
 {
 	char		name[MAX_QPATH];
@@ -461,6 +544,11 @@ typedef struct qmodel_s
 	synctype_t	synctype;
 
 	int			flags;
+
+	// Quake3 md3
+
+	//int			dataSize;			// just for listing purposes
+	md3Header_t		*md3[3];	// only if type == MOD_MESH (lod is unused and unsupported)
 
 #ifdef PSET_SCRIPT
 	int			emiteffect;		//spike -- this effect is emitted per-frame by entities with this model
@@ -548,7 +636,6 @@ typedef struct qmodel_s
 // additional model data
 //
 	cache_user_t	cache;		// only access through Mod_Extradata
-
 } qmodel_t;
 
 //============================================================================
@@ -565,5 +652,9 @@ byte	*Mod_LeafPVS (mleaf_t *leaf, qmodel_t *model);
 byte	*Mod_NoVisPVS (qmodel_t *model);
 
 void Mod_SetExtraFlags (qmodel_t *mod);
+
+md3Tag_t* R_GetTag(md3Header_t* mod, int frame, const char* tagName);
+md3xTag_t* R_GetMD3XTag(md3Header_t* mod, int frame, const char* tagName);
+void Mod_ReadMD3Data(qmodel_t* mod, void* buffer, float o_framenum, vec3_t o_tagorig, vec3_t o_tagaxis);
 
 #endif	// __MODEL__

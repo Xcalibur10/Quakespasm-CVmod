@@ -63,6 +63,7 @@ d:\documents\github\quakespasm-cvmod\windows\visualstudio\build-quakespasm-sdl2\
 d:\documents\github\quakespasm-cvmod\windows\visualstudio\build-quakespasm-sdl2\x64\debug\cfgfile.obj
 d:\documents\github\quakespasm-cvmod\windows\visualstudio\build-quakespasm-sdl2\x64\debug\chase.obj
 d:\documents\github\quakespasm-cvmod\windows\visualstudio\build-quakespasm-sdl2\x64\debug\cl_demo.obj
+d:\documents\github\quakespasm-cvmod\windows\visualstudio\build-quakespasm-sdl2\x64\debug\cl_input.obj
 d:\documents\github\quakespasm-cvmod\windows\visualstudio\build-quakespasm-sdl2\x64\debug\cl_main.obj
 d:\documents\github\quakespasm-cvmod\windows\visualstudio\build-quakespasm-sdl2\x64\debug\cl_parse.obj
 d:\documents\github\quakespasm-cvmod\windows\visualstudio\build-quakespasm-sdl2\x64\debug\cl_tent.obj
@@ -81,12 +82,10 @@ d:\documents\github\quakespasm-cvmod\windows\visualstudio\build-quakespasm-sdl2\
 d:\documents\github\quakespasm-cvmod\windows\visualstudio\build-quakespasm-sdl2\x64\debug\gl_rmain.obj
 d:\documents\github\quakespasm-cvmod\windows\visualstudio\build-quakespasm-sdl2\x64\debug\bgmusic.obj
 d:\documents\github\quakespasm-cvmod\windows\visualstudio\build-quakespasm-sdl2\x64\debug\cd_sdl.obj
-d:\documents\github\quakespasm-cvmod\windows\visualstudio\build-quakespasm-sdl2\x64\debug\cl_input.obj
 d:\games\gog games\quakemod\quakespasm-spiked-mod.exe
 d:\documents\github\quakespasm-cvmod\windows\visualstudio\build-quakespasm-sdl2\x64\debug\quakespasm-spiked-mod.ilk
 d:\games\gog games\quakemod\quakespasm-spiked-mod.pdb
 d:\documents\github\quakespasm-cvmod\windows\visualstudio\build-quakespasm-sdl2\x64\debug\quakespasm.res
-d:\documents\github\quakespasm-cvmod\windows\visualstudio\build-quakespasm-sdl2\x64\debug\quakespasm-spiked-sdl2_mod.ilk
 d:\documents\github\quakespasm-cvmod\windows\visualstudio\build-quakespasm-sdl2\x64\debug\quakespasm-sdl2.tlog\cl.command.1.tlog
 d:\documents\github\quakespasm-cvmod\windows\visualstudio\build-quakespasm-sdl2\x64\debug\quakespasm-sdl2.tlog\cl.read.1.tlog
 d:\documents\github\quakespasm-cvmod\windows\visualstudio\build-quakespasm-sdl2\x64\debug\quakespasm-sdl2.tlog\cl.write.1.tlog

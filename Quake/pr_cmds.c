@@ -764,6 +764,7 @@ static void PF_break (void)
 //	PR_RunError ("break statement");
 }
 
+
 /*
 =================
 PF_traceline
@@ -777,7 +778,7 @@ traceline (vector1, vector2, tryents)
 */
 static void PF_traceline (void)
 {
-	float	*v1, *v2;
+	float* v1, * v2;
 	trace_t	trace;
 	int	nomonsters;
 	edict_t	*ent;
@@ -1130,7 +1131,8 @@ static void PF_vtos (void)
 		Q_ftoa(x, G_VECTOR(OFS_PARM0)[0]);
 		Q_ftoa(y, G_VECTOR(OFS_PARM0)[1]);
 		Q_ftoa(z, G_VECTOR(OFS_PARM0)[2]);
-		sprintf (s, "'%s %s %s'", x, y, z);
+		//sprintf (s, "'%s %s %s'", x, y, z);
+		sprintf(s, "'%5.3f %5.3f %5.3f'", G_VECTOR(OFS_PARM0)[0], G_VECTOR(OFS_PARM0)[1], G_VECTOR(OFS_PARM0)[2]);
 	}
 	G_INT(OFS_RETURN) = PR_SetEngineString(s);
 }
@@ -2114,12 +2116,15 @@ static void PF_cl_setmodel (void)
 	}
 }
 
+
 static void PF_cl_lightstyle (void)
 {
 	int style = G_FLOAT(OFS_PARM0);
 	const char *val = G_STRING(OFS_PARM1);
 	CL_UpdateLightstyle(style, val);
 }
+
+//<ENTITY_STATE>
 static void PF_cl_makestatic (void)
 {
 	edict_t	*ent = G_EDICT(OFS_PARM0);
@@ -2158,6 +2163,9 @@ static void PF_cl_makestatic (void)
 	stat->skinnum = stat->baseline.skin;
 	stat->effects = stat->baseline.effects;
 	stat->alpha = stat->baseline.alpha; //johnfitz -- alpha
+	stat->texspeed = stat->baseline.texspeed; //Coffee -- texture animation speed
+	stat->animlerptime = stat->baseline.animlerptime; //Coffee -- animation lerp speed
+	Con_Printf("from baseline to stat->%d \n", stat->texspeed);
 
 	VectorCopy (ent->baseline.origin, stat->origin);
 	VectorCopy (ent->baseline.angles, stat->angles);

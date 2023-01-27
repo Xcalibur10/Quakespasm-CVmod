@@ -34,6 +34,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define M_PI_DIV_180	(M_PI / 180.0) //johnfitz
 #define DEG2RAD(a)		((a) * M_PI_DIV_180)
+#define RAD2DEG(a)		((a) * 180 / M_PI)
+#define PI_DIV_255			(2*M_PI)/255
 
 struct mplane_s;
 
@@ -110,6 +112,22 @@ int GreatestCommonDivisor (int i1, int i2);
 void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up);
 int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, struct mplane_s *plane);
 float	anglemod(float a);
+
+
+float SqrtXXYY(float x, float y);
+void MatToEuler(vec3_t matrix[3], vec3_t out);
+
+
+int Sign(float num);	//return sign of a number
+float CopySign(float a, float b);
+void MatToQuat(vec3_t matrix[3], vec4_t q_out);
+void QuatToEuler(vec4_t quat, vec3_t out);
+void EulerToQuat(vec3_t eul, vec4_t out);
+float LerpDegrees(float start, float end, float amount);
+float Lerp(float a, float b, float t);
+float absAngle(a);
+float angleDelta(a, b);
+
 
 
 #define BOX_ON_PLANE_SIDE(emins, emaxs, p)	\

@@ -552,23 +552,28 @@ void GL_DrawAliasFrame (aliashdr_t *paliashdr, lerpdata_t lerpdata)
 					{
 						vec3_t n;
 						float dot;
+
+						float lat, lng;
 						// map the normal coordinates in [-1..1] to [-127..127] and store in an unsigned char.
 						// this introduces some error (less than 0.004), but the normals were very coarse
 						// to begin with
 						//this should be a table.
-						float lat = (float)verts2[i].latlong[0] * (2 * M_PI)*(1.0 / 255.0);
-						float lng = (float)verts2[i].latlong[1] * (2 * M_PI)*(1.0 / 255.0);
-						n[0] = blend * cos ( lng ) * sin ( lat );
-						n[1] = blend * sin ( lng ) * sin ( lat );
-						n[2] = blend * cos ( lat );
-						lat = (float)verts1[i].latlong[0] * (2 * M_PI)*(1.0 / 255.0);
-						lng = (float)verts1[i].latlong[1] * (2 * M_PI)*(1.0 / 255.0);
-						n[0] += iblend * cos ( lng ) * sin ( lat );
-						n[1] += iblend * sin ( lng ) * sin ( lat );
-						n[2] += iblend * cos ( lat );
+
+						lat = (int)((verts2->normal >> 8) & 255) * PI_DIV_255;
+						lng = (int)(verts2->normal & 255) * PI_DIV_255;
+
+						n[0] = blend * cos ( lat ) * sin ( lng );
+						n[1] = blend * sin ( lat ) * sin ( lng );
+						n[2] = blend * cos ( lng );
+
+						lat = (int)((verts1->normal >> 8) & 255) * PI_DIV_255;
+						lng = (int)(verts1->normal & 255) * PI_DIV_255;
+						n[0] += iblend * cos(lat) * sin(lng);
+						n[1] += iblend * sin(lat) * sin(lng);
+						n[2] += iblend * cos(lng);
 						dot = DotProduct(n, shadevector);
-						if (dot < 0.0)	//bizzare maths guessed by mh
-							dot = 1.0 + dot * (13.0 / 44.0);
+						if (dot < 0.0)	//bizarre maths guessed by mh
+							dot = 1.0 + dot * (13 / 44.0);
 						else
 							dot = 1.0 + dot;
 						vc[i][0] = dot * lightcolor[0];
@@ -588,12 +593,16 @@ void GL_DrawAliasFrame (aliashdr_t *paliashdr, lerpdata_t lerpdata)
 					{
 						vec3_t n;
 						float dot;
+						float lat, lng;
 						// map the normal coordinates in [-1..1] to [-127..127] and store in an unsigned char.
 						// this introduces some error (less than 0.004), but the normals were very coarse
 						// to begin with
 						//this should be a table.
-						float lat = (float)verts2[i].latlong[0] * (2 * M_PI)*(1.0 / 255.0);
-						float lng = (float)verts2[i].latlong[1] * (2 * M_PI)*(1.0 / 255.0);
+						//float lat = (float)verts2[i].latlong[0] * (2 * M_PI)*(1.0 / 255.0);
+						//float lng = (float)verts2[i].latlong[1] * (2 * M_PI)*(1.0 / 255.0);
+						lat = (float)((verts2[i].normal >> 8) & 255) * PI_DIV_255;
+						lng = (float)(verts2[i].normal & 255) * PI_DIV_255;
+
 						n[0] = cos ( lng ) * sin ( lat );
 						n[1] = sin ( lng ) * sin ( lat );
 						n[2] = cos ( lat );
@@ -779,6 +788,7 @@ void R_SetupAliasFrame (aliashdr_t *paliashdr, entity_t *e, lerpdata_t *lerpdata
 
 			lerpdata->pose1 = paliashdr->frames[frame].firstpose;
 			lerpdata->pose1 += (unsigned int)(e->lerp.snap.time[0]/paliashdr->frames[frame].interval) % paliashdr->frames[frame].numposes;
+			
 
 			lerpdata->pose2 = paliashdr->frames[frame2].firstpose;
 			lerpdata->pose2 += (unsigned int)(e->lerp.snap.time[1]/paliashdr->frames[frame2].interval) % paliashdr->frames[frame].numposes;
@@ -799,10 +809,13 @@ void R_SetupAliasFrame (aliashdr_t *paliashdr, entity_t *e, lerpdata_t *lerpdata
 		}
 		else
 		{
-			//Change lerp speed based on nextthink
-			//float time = cl.time + e->syncbase;
-			//float lerpspeed = 0.1;
-			e->lerp.state.lerptime = 0.1; //0.1
+			//Coffee - Rewritten to support variable lerping intervals (usually the same as nextthink, called from QC)
+
+			float lerp = 10;
+			if(e->animlerptime > 0)
+				lerp = e->animlerptime;
+
+			e->lerp.state.lerptime = 1/lerp; //0.1
 		}
 
 		if (e->lerpflags & LERP_RESETANIM) //kill any lerp in progress
@@ -846,6 +859,11 @@ void R_SetupAliasFrame (aliashdr_t *paliashdr, entity_t *e, lerpdata_t *lerpdata
 			lerpdata->pose2 = posenum;
 		}
 	}
+
+	/*if (e->model->name == "progs/player.md3x")
+	{
+		Con_Printf("\nNumposes: %d | blend: %f", numposes, lerpdata->blend);
+	}*/
 
 	if (paliashdr->numboneposes)
 	{
@@ -1001,7 +1019,7 @@ void R_SetupAliasLighting (entity_t	*e)
 		// minimum light value on players (8)
 		if (e > cl.entities && e <= cl.entities + cl.maxclients)
 		{
-			add = 24.0f - (lightcolor[0] + lightcolor[1] + lightcolor[2]);
+			add = 12.0f - (lightcolor[0] + lightcolor[1] + lightcolor[2]);
 			if (add > 0.0f)
 			{
 				lightcolor[0] += add / 3.0f;
@@ -1388,6 +1406,11 @@ void GL_DrawAliasShadow(entity_t* e)
 	aliashdr_t* paliashdr;
 	lerpdata_t	lerpdata;
 
+	trace_t	downtrace;
+
+	if (r_shadow_alpha.value <= 0)
+		return;
+
 	if (R_CullModelForEntity(e))
 		return;
 
@@ -1397,12 +1420,21 @@ void GL_DrawAliasShadow(entity_t* e)
 	entalpha = ENTALPHA_DECODE(e->alpha);
 	if (entalpha == 0) return;
 
+	
+
 	paliashdr = (aliashdr_t*)Mod_Extradata(e->model);
 	R_SetupAliasFrame(paliashdr, e, &lerpdata);
 	R_SetupEntityTransform(e, &lerpdata);
 	R_LightPoint(e->origin);
 	lheight = currententity->origin[2] - lightspot[2];
+	vec3_t downvector;
+	downvector[0] = 0;
+	downvector[1] = 0;
+	downvector[2] = -64;
 
+	VectorAdd(e->origin, downvector, downvector);
+
+	
 	// set up matrix
 	glPushMatrix();
 	glTranslatef(lerpdata.origin[0], lerpdata.origin[1], lerpdata.origin[2]);
@@ -1414,9 +1446,6 @@ void GL_DrawAliasShadow(entity_t* e)
 	glRotatef(lerpdata.angles[2], 1, 0, 0);
 	glTranslatef(paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
 	glScalef(paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
-
-
-
 
 // draw it
 	glDepthMask(GL_FALSE);
@@ -1432,6 +1461,219 @@ void GL_DrawAliasShadow(entity_t* e)
 
 //clean up
 	glPopMatrix ();
+}
+
+
+typedef struct
+{
+	vec3_t	endpos;
+	float	alpha;
+	float	fraction;
+	BOOL	no_hit;
+} blobshadow_t;
+
+#define trace_length 128;
+blobshadow_t GetShadowVertexPos(vec3_t vert_center, vec3_t vert_offset)
+{
+	vec3_t impact;
+	vec3_t trace_start;
+	vec3_t trace_end;
+
+	blobshadow_t blob;
+	blob.no_hit = false;
+
+	trace_start[0] = vert_center[0] + vert_offset[0];
+	trace_start[1] = vert_center[1] + vert_offset[1];
+	trace_start[2] = vert_center[2] + vert_offset[2];
+
+	trace_end[0] = trace_start[0] + vert_offset[0];
+	trace_end[1] = trace_start[1] + vert_offset[1];
+	trace_end[2] = trace_start[2] - trace_length;
+
+	TraceLine(trace_start, trace_end, impact);
+	impact[2] += 1;	//slightly move above the ground
+	VectorCopy(impact, blob.endpos);
+	blob.endpos[0] = trace_start[0];
+	blob.endpos[1] = trace_start[1];
+
+
+	blob.fraction = (trace_start[2] - impact[2]) / trace_length;
+	blob.alpha = 1 - blob.fraction;
+	if (blob.fraction >= 1) {
+		blob.no_hit = true;
+		blob.alpha = 0;
+	}
+	//Con_Printf("Trace frac: %.5f\n", blob.fraction);
+	return blob;
+}
+
+/*========================================================
+GL_CreateBlobShadow -- Coffee
+=========================================================*/
+void GL_CreateBlobShadow(vec3_t c, float radius, int sides, lerpdata_t lerpdata)
+{
+
+	trace_t trace;
+	edict_t* ent; //NOT REALLY NEEDED TO BE FAIR...
+	vec3_t impact;
+	vec3_t trace_start;
+	vec3_t trace_end;
+
+	ent = NULL;
+
+	trace_start[0] = lerpdata.origin[0];
+	trace_start[1] = lerpdata.origin[1];
+	trace_start[2] = lerpdata.origin[2];
+
+	trace_end[0] = trace_start[0];
+	trace_end[1] = trace_start[1];
+	trace_end[2] = trace_start[2] - trace_length;
+
+
+	trace = SV_Move(trace_start, vec3_origin, vec3_origin, trace_end, 0, ent); //will we ever use ent here???
+	vec3_t* hit_normal = trace.plane.normal;
+	trace.endpos[0] = 0;
+	trace.endpos[1] = 0;
+	trace.endpos[2] = 0;
+
+	VectorAngles(hit_normal, 0, hit_normal);
+	//Con_Printf("Shadow normal: %f %f %f\n", hit_normal[0], hit_normal[1], hit_normal[2]);
+
+
+	//DRAW THE SHADOW--------------------------------------------
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+
+	//glEnable(GL_TEXTURE_2D);
+	//glEnable(GL_STENCIL_TEST);
+	//glStencilFunc(GL_NOTEQUAL, 0, 255);
+
+	//glDisable(GL_CLIP_PLANE0);
+	//glDisable(GL_CULL_FACE);
+
+	glDepthMask(GL_FALSE);
+	glBindTexture(GL_TEXTURE_2D, shadowblob->texnum);
+	//glLoadIdentity();
+
+	//glDepthMask(GL_TRUE);
+	
+
+	glBegin(GL_TRIANGLE_FAN);
+	glTexCoord2f(0.5, 0.5);
+	glColor4f(1, 1, 1, .9); //0.5 was originally, added a cvar to control it. //entalpha * r_shadow_alpha.value
+	glVertex3f(0, 0, 0);
+	for (int ii = 0; ii <= sides; ii++)
+	{
+
+		float theta = 2.0f * 3.1415926f * (float)-ii / (float)sides; // +DEG2RAD(currententity->angles[YAW]);		//get the current angle 
+		float x = cosf(theta);	//calculate the x component 
+		float y = sinf(theta);	//calculate the y component 
+
+		glTexCoord2f(x / 2 + 0.5, y / 2 + 0.5);
+		x *= radius;
+		y *= radius;
+		vec3_t ofs;
+		ofs[0] = x;
+		ofs[1] = y;
+		ofs[2] = -20;
+		glColor4f(1, 1, 1, 0.9);
+		glVertex3f(ofs[0], ofs[1], 0);	//output vertex 
+
+	}
+	glEnd();
+
+	glDepthMask(GL_TRUE);
+	glDisable(GL_BLEND);
+	glBlendFunc(GL_ONE, GL_ZERO);
+}
+
+/*
+=============
+GL_DrawAliasShadowN64 -- Coffee
+=============
+*/
+void GL_DrawAliasShadowN64(entity_t* e)
+{
+
+	float	shadowmatrix[16] = { 1,				0,				0,				0,
+							0,				1,				0,				0,
+							SHADOW_SKEW_X,	SHADOW_SKEW_Y,	SHADOW_VSCALE,	0,
+							0,				0,				SHADOW_HEIGHT,	1 };
+
+	lerpdata_t	lerpdata;
+	float lheight = currententity->origin[2] - lightspot[2];
+
+	if (r_shadow_alpha.value <= 0)
+		return;
+
+	if (R_CullModelForEntity(e))
+		return;
+
+	if (e == &cl.viewent || e->effects & EF_NOSHADOW || e->model->flags & MOD_NOSHADOW)
+		return;
+
+	entalpha = ENTALPHA_DECODE(e->alpha);
+	if (entalpha == 0) return;
+
+
+
+	R_SetupEntityTransform(e, &lerpdata);
+
+	// set up matrix
+	glPushMatrix();
+	glTranslatef(lerpdata.origin[0], lerpdata.origin[1], lerpdata.origin[2]);
+	glTranslatef(0, 0, -lheight);
+	glMultMatrixf(shadowmatrix);
+	glTranslatef(0, 0, lheight);
+	glRotatef(lerpdata.angles[1], 0, 0, 1);
+	glRotatef(-lerpdata.angles[0], 0, 1, 0);
+	glRotatef(lerpdata.angles[2], 1, 0, 0);
+	//glTranslatef(paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
+	//glScalef(paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
+
+
+	// draw it
+	shading = false;
+	vec3_t orig;
+	orig[0] = lerpdata.origin[0];
+	orig[1] = lerpdata.origin[1];
+	orig[2] = lightspot[2]+1;
+	float rad = currententity->model->maxs[1] * 0.85;
+	GL_CreateBlobShadow(orig, rad, 6 ,lerpdata);
+
+	
+	//clean up
+	glPopMatrix();
+	
+}
+
+
+/*R_DrawTraceLines*/
+void R_DrawTraceLines()
+{
+	vec3_t v1, v2;
+
+	v1[0] = 0.0;
+	v1[1] = 0.0;
+	v1[2] = 0.0;
+
+	v2[0] = 10.0;
+	v2[1] = 20.0;
+	v2[2] = 110.0;
+
+	glDepthMask(GL_FALSE);
+	glDisable(GL_DEPTH_TEST);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	GL_PolygonOffset(OFFSET_SHOWTRIS);
+	glBegin(GL_LINES);
+	glColor4f(1, 0, 0, 1);
+	glVertex3f(v1[0], v1[1], v1[2]);
+	glVertex3f(v2[0], v2[1], v2[2]);
+	glColor4f(1, 1, 1, 1);
+	glEnd();
+	glEnable(GL_DEPTH_TEST);
+	glDepthMask(GL_TRUE);
 }
 
 /*

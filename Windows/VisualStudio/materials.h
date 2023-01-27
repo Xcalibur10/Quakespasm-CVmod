@@ -1,0 +1,12 @@
+//YEP, THIS IS FROM HALF-LIFE 1 BY VALVE
+#define CHAR_TEX_CONCRETE		'C'
+#define CHAR_TEX_METAL          'M'
+#define CHAR_TEX_DIRT           'D'
+#define CHAR_TEX_VENT           'V'
+#define CHAR_TEX_GRATE          'G'
+#define CHAR_TEX_TILE           'T'
+#define CHAR_TEX_SLOSH          'S'
+#define CHAR_TEX_WOOD           'W'
+#define CHAR_TEX_GLASS          'Y'
+#define CHAR_TEX_FLESH          'F'
+#define CHAR_TEX_STONE			'R'

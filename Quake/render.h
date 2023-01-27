@@ -82,6 +82,7 @@ typedef struct entity_s
 	byte					eflags;			//spike -- mostly a mirror of netstate, but handles tag inheritance (eww!)
 	byte					alpha;			//johnfitz -- alpha
 	byte					lerpflags;		//johnfitz -- lerping
+	
 
 	union
 	{
@@ -108,7 +109,8 @@ typedef struct entity_s
 	vec3_t					previousangles;	//johnfitz -- transform lerping
 	vec3_t					currentangles;	//johnfitz -- transform lerping
 
-	float					texspeed;		//JoeyAP -- per entity texture speed
+	unsigned int			texspeed;		//Coffee -- per entity texture speed
+	short					animlerptime;	//Coffee -- lerp time between two frames. Default is 10 for 10 frames / seconds animations.
 
 	struct trailstate_s		*trailstate;	//spike -- managed by the particle system, so we don't loose our position and spawn the wrong number of particles, and we can track beams etc
 	struct trailstate_s		*emitstate;		//spike -- for effects which are not so static.

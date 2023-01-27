@@ -62,6 +62,23 @@ void TraceLine (vec3_t start, vec3_t end, vec3_t impact)
 
 /*
 ==============
+TraceLine
+
+TODO: impact on bmodels, monsters
+==============
+*/
+void TraceData(vec3_t start, vec3_t end, vec3_t impact)
+{
+	trace_t	trace;
+
+	memset(&trace, 0, sizeof(trace));
+	SV_RecursiveHullCheck(cl.worldmodel->hulls, start, end, &trace, CONTENTMASK_ANYSOLID);
+
+	VectorCopy(trace.endpos, impact);
+}
+
+/*
+==============
 Chase_UpdateForClient -- johnfitz -- orient client based on camera. called after input
 ==============
 */
@@ -112,18 +129,18 @@ void Chase_UpdateForDrawing(void)
 		ideal[i] += forward[i] * 32;
 		//ideal[1] += forward[1] * 32;
 	}
-	ideal[2] -= up[2] * 32;
+	ideal[2] -= up[2] * 16;
 
 	// place camera
 	VectorCopy(ideal, r_refdef.vieworg);
 
 	offset[0] = -forward[0] * 32;
 	offset[1] = -forward[1] * 32;
-	offset[2] = -up[2] * 32;
+	offset[2] = -up[2] * 0;
 
 	temp[0] -= forward[0] * 32;
 	temp[1] -= forward[1] * 32;
-	temp[2] += forward[2] * 326;
+	temp[2] += forward[2] * 32;
 
 	// find the spot the player is looking at
 	VectorMA(cl.viewent.origin, 4096, forward, temp);
@@ -152,8 +169,6 @@ void Chase_UpdateForDrawing2(void)
 	int		i;
 	vec3_t	forward, up, right;
 	vec3_t	ideal, crosshair, temp;
-	vec3_t	spot2;
-	vec3_t	dir;
 
 
 	AngleVectors(r_refdef.viewangles, forward, right, up);
