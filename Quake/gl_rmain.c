@@ -863,7 +863,7 @@ void R_ShowTris (void)
 
 	if (r_showtris.value < 1 || r_showtris.value > 2 || cl.maxclients > 1)
 		return;
-	R_DrawTraceLines();
+	//R_DrawTraceLines();
 
 	if (r_showtris.value == 1)
 		glDisable (GL_DEPTH_TEST);
@@ -975,7 +975,7 @@ void R_DrawShadows (void)
 		if (r_shadows.value == 2)
 		{
 			
-			GL_DrawAliasShadowN64(currententity);
+			//GL_DrawAliasShadowN64(currententity);
 		}
 	}
 

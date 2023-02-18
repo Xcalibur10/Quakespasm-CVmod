@@ -360,6 +360,7 @@ extern	cvar_t	m_side;
 
 extern	cvar_t	cl_texturespeed;
 
+extern	qboolean view_changed;
 
 #define	MAX_TEMP_ENTITIES			256		//johnfitz -- was 64
 
@@ -409,6 +410,8 @@ extern	kbutton_t	in_mlook, in_klook;
 extern 	kbutton_t 	in_strafe;
 extern 	kbutton_t 	in_speed;
 
+void InputAxisSpring(float speed, float dec, float inc, int in_dir, float out);
+
 void CL_InitInput (void);
 void CL_AccumulateCmd (void);
 void CL_SendCmd (void);
@@ -419,6 +422,7 @@ void CL_BaseMove (usercmd_t *cmd);
 void CL_BaseMoveOrbit(usercmd_t* cmd);
 void CL_BaseMoveGoat(usercmd_t* cmd);
 void CL_FinishMove(usercmd_t *cmd);
+
 
 void CL_Download_Data(void);
 qboolean CL_CheckDownloads(void);

@@ -439,6 +439,7 @@ void VectorScale (const vec3_t in, vec_t scale, vec3_t out)
 }
 
 
+
 int Q_log2(int val)
 {
 	int answer=0;

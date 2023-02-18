@@ -354,6 +354,8 @@ void SV_NoclipMove (void)
 	}
 }
 
+
+
 /*
 ===================
 SV_AirMove
@@ -367,11 +369,17 @@ void SV_AirMove(void)
 	float		fmove, smove;
 	vec3_t		move_vec, input_norm;
 
+	//Few things from Half-Life's source code
+	int			oldonground;
+	float		downdist, updist;
+	vec3_t		down, downvel;
+
 	AngleVectors(sv_player->v.angles, forward, right, up);
 
 	fmove = cmd.forwardmove;
 	smove = cmd.sidemove;
 
+	//Limit some speed
 	fmove = CLAMP(-sv_maxbackspeed.value, fmove, sv_maxspeed.value);
 	smove = CLAMP(-sv_maxsidespeed.value, smove, sv_maxsidespeed.value);
 
@@ -421,15 +429,25 @@ void SV_AirMove(void)
 	}
 	else if (onground)
 	{
-		sv_player->v.velocity[2] = q_min(sv_player->v.velocity[2], 0);
+		//sv_player->v.velocity[2] = q_min(sv_player->v.velocity[2], 0);
+		sv_player->v.velocity[2] = 0;
 		SV_UserFriction();	
 		SV_Accelerate(wishspeed, wishdir);
+		sv_player->v.velocity[2] = 0;
+
+		float spd = VectorLength(sv_player->v.velocity);
+		if (spd < 1.0f)
+		{
+			VectorClear(sv_player->v.velocity);
+
+		}
 		
 	}
 	else
 	{	// not on ground, so little effect on velocity
 		SV_AirAccelerate(wishspeed, wishvel);
 	}
+	oldonground = onground;
 }
 
 /*

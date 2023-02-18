@@ -75,6 +75,9 @@ entity_t		**cl_visedicts;
 extern cvar_t	r_lerpmodels, r_lerpmove; //johnfitz
 extern float	host_netinterval;	//Spike
 
+//Check if we changed camera view
+qboolean view_changed;
+
 void CL_ClearTrailStates(void)
 {
 	int i;
@@ -1273,10 +1276,10 @@ void CL_SendCmd (void)
 
 	switch ((int)chase_active.value)
 	{
-		case 1: CL_BaseMove(&cmd); break;
-		case 2: CL_BaseMoveOrbit(&cmd);  break;
-		case 3: CL_BaseMoveGoat(&cmd);  break;
-		default: CL_BaseMove(&cmd); break;
+		case 1: CL_BaseMove(&cmd); view_changed = false; break;
+		case 2: CL_BaseMoveOrbit(&cmd); view_changed = false; break;
+		case 3: CL_BaseMoveGoat(&cmd); view_changed = false; break;
+		default: CL_BaseMove(&cmd); view_changed = false; break;
 	}
 
 	// allow mice or other external controllers to add to the move

@@ -85,6 +85,8 @@ void _VectorSubtract (const vec3_t veca, const vec3_t vecb, vec3_t out);
 void _VectorAdd (const vec3_t veca, const vec3_t vecb, vec3_t out);
 void _VectorCopy (const vec3_t in, vec3_t out);
 
+#define VectorClear(a) {(a)[0]=0.0;(a)[1]=0.0;(a)[2]=0.0;}
+
 int VectorCompare (const vec3_t v1, const vec3_t v2);
 vec_t VectorLength (const vec3_t v);
 void CrossProduct (const vec3_t v1, const vec3_t v2, vec3_t cross);

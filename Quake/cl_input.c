@@ -393,6 +393,60 @@ vec3_t		in_dir;				//Input direction vector
 float		last_yaw;
 vec3_t		final_dir;
 
+extern qboolean view_changed;
+
+float fwd_acc;
+float side_acc;
+int fwd_dir;
+int side_dir;
+
+#define INPUT_ACC 12
+
+//#define added_spd (float)side_dir * (speed*host_frametime);
+
+void InputAxisSpring(float speed, float input, int *in_dir, float *out)
+{
+	float return_speed = speed*0.5;
+	int temp_dir = *in_dir;
+	float temp_acc = *out;
+
+	temp_dir = (input < 0) ? -1 : ((input > 0) ? 1 : temp_dir);
+	speed = (temp_dir * temp_acc < 0) ? return_speed : speed;
+
+
+	if(input == 0)
+	{
+		speed = return_speed;
+		if (temp_dir > 0)
+		{
+			speed *= -1;
+			if (temp_acc < 0)
+			{
+				temp_dir = 0;
+				temp_acc = 0;
+			}
+		}
+		if (temp_dir < 0)
+		{
+			speed *= -1;
+			if (temp_acc > 0)
+			{
+				temp_dir = 0;
+				temp_acc = 0;
+			}
+		}
+
+	}
+
+	temp_acc += temp_dir * (speed * host_frametime);
+	//Con_Printf("\nOUT: %.3f | Dir: %d | speed: %.3f | keys: %.2f", temp_acc, temp_dir, speed, input);
+
+	*out = CLAMP(-1.0, temp_acc, 1.0);
+	*in_dir = temp_dir;
+
+	//return *out;
+}
+
 /*
 ================
 CL_BaseMove
@@ -402,6 +456,9 @@ Send the intended movement message to the server
 */
 void CL_BaseMove (usercmd_t *cmd)
 {
+
+	if (!view_changed) view_changed;
+
 	Q_memset (cmd, 0, sizeof(*cmd));
 
 	last_yaw = cl.viewangles[YAW];
@@ -412,20 +469,21 @@ void CL_BaseMove (usercmd_t *cmd)
 
 	if (in_strafe.state & 1)
 	{
-		cmd->sidemove += cl_sidespeed.value * CL_KeyState (&in_right);
-		cmd->sidemove -= cl_sidespeed.value * CL_KeyState (&in_left);
+		InputAxisSpring(INPUT_ACC, CL_KeyState(&in_right)- CL_KeyState(&in_left), &side_dir, &side_acc);
+		cmd->sidemove += cl_sidespeed.value * side_acc;
 	}
-
-	cmd->sidemove += cl_sidespeed.value * CL_KeyState (&in_moveright);
-	cmd->sidemove -= cl_sidespeed.value * CL_KeyState (&in_moveleft);
+	InputAxisSpring(INPUT_ACC, CL_KeyState(&in_moveright)- CL_KeyState(&in_moveleft), &side_dir, &side_acc);
+	cmd->sidemove += cl_sidespeed.value * side_acc;
 
 	cmd->upmove += cl_upspeed.value * CL_KeyState (&in_up);
 	cmd->upmove -= cl_upspeed.value * CL_KeyState (&in_down);
 
 	if (! (in_klook.state & 1) )
 	{
-		cmd->forwardmove += cl_forwardspeed.value * CL_KeyState (&in_forward);
-		cmd->forwardmove -= cl_backspeed.value * CL_KeyState (&in_back);
+		//cmd->forwardmove += cl_forwardspeed.value * CL_KeyState (&in_forward);
+		InputAxisSpring(INPUT_ACC, CL_KeyState(&in_back)- CL_KeyState(&in_forward), &fwd_dir, &fwd_acc);
+		cmd->forwardmove -= cl_forwardspeed.value * fwd_acc;
+		
 	}
 
 //
@@ -439,12 +497,14 @@ void CL_BaseMove (usercmd_t *cmd)
 	}
 }
 
-
+//Variables for orbit camera
 float dir_frac = 1;
 float targ_yaw = 0;
 float temp_yaw = 0;
 unsigned char do_turn = 0;
 int turn_dir = 0;
+
+
 
 /*
 ================
@@ -576,6 +636,10 @@ void CL_BaseMoveOrbit(usercmd_t* cmd)
 	}
 }
 
+
+int last_camdir; //Previous camera direction. -1 is looking left, +1 is looking right, 0 is resetted to forward.
+float cam_rot_speed;
+qboolean cam_centered;
 /*
 ================
 CL_BaseMoveGoat
@@ -600,8 +664,6 @@ void CL_BaseMoveGoat(usercmd_t* cmd)
 
 	Con_Printf("camera yaw: %.3f\n", rd_yaw);
 
-	//rd_yaw = (rd_yaw - 180) * (2 * M_PI / 360); //To radian... 
-
 	float rad_targ_yaw, rad_rd_yaw;
 	rad_targ_yaw = DEG2RAD(anglemod(targ_yaw));
 	rad_rd_yaw = DEG2RAD(anglemod(rd_yaw));
@@ -609,21 +671,24 @@ void CL_BaseMoveGoat(usercmd_t* cmd)
 	diff_yaw = RAD2DEG(diff_yaw);
 	float diff_yaw_norm = diff_yaw / 180.0;
 
-	in_dir[0] = CL_KeyState(&in_back) - CL_KeyState(&in_forward);
-	in_dir[1] = CL_KeyState(&in_moveright) - CL_KeyState(&in_moveleft);
+	InputAxisSpring(INPUT_ACC, CL_KeyState(&in_back) - CL_KeyState(&in_forward), &fwd_dir, &fwd_acc);
+	InputAxisSpring(INPUT_ACC, CL_KeyState(&in_moveright) - CL_KeyState(&in_moveleft), &side_dir, &side_acc);
+
+	in_dir[0] = fwd_acc;
+	in_dir[1] = side_acc;
 	in_dir[2] = 0;
 
 	//Side, backward and forward movements
-	cmd->sidemove += cl_sidespeed.value * CL_KeyState(&in_moveright);
-	cmd->sidemove -= cl_sidespeed.value * CL_KeyState(&in_moveleft);
+	//cmd->sidemove += cl_sidespeed.value * CL_KeyState(&in_moveright);
+	cmd->sidemove += cl_sidespeed.value * side_acc;
 
 	cmd->upmove += cl_upspeed.value * CL_KeyState(&in_up);
 	cmd->upmove -= cl_upspeed.value * CL_KeyState(&in_down);
 
 	if (!(in_klook.state & 1))
 	{
-		cmd->forwardmove += cl_forwardspeed.value * CL_KeyState(&in_forward) * (1 - fabs(diff_yaw_norm));
-		cmd->forwardmove -= cl_backspeed.value * CL_KeyState(&in_back) * (1 - fabs(diff_yaw_norm));
+		//cmd->forwardmove += cl_forwardspeed.value * CL_KeyState(&in_forward);
+		cmd->forwardmove -= cl_forwardspeed.value * fwd_acc;
 	}
 
 	//
@@ -639,17 +704,21 @@ void CL_BaseMoveGoat(usercmd_t* cmd)
 	}
 
 	float limit = cl.maxturnspeed;
-	Con_Printf("Yaw Diff: %.3f | Limit: %.3f\n", fabs(diff_yaw_norm), limit);
 
+	
 	if (!(in_dir[0] == 0 && in_dir[1] == 0))
 	{
-		targ_yaw -= CLAMP(-limit, diff_yaw*5, limit);
+		targ_yaw -= CLAMP(-limit, 30* diff_yaw_norm, limit);
 	}
-
+	else
+	{
+		last_camdir = Sign(diff_yaw);
+	}
+	Con_Printf("Yaw Diff: %.3f | Limit: %.3f | last camdir: %d\n", fabs(diff_yaw_norm), limit, last_camdir);
 
 	
 
-	Con_Printf("targ_yaw: %.3f | rd_yaw: %.3f | yaw_diff: %.3f\ | turn_dir: %d\n", RAD2DEG(rad_targ_yaw), RAD2DEG(rad_rd_yaw), diff_yaw, turn_dir);
+	//Con_Printf("targ_yaw: %.3f | rd_yaw: %.3f | yaw_diff: %.3f\ | turn_dir: %d\n", RAD2DEG(rad_targ_yaw), RAD2DEG(rad_rd_yaw), diff_yaw, turn_dir);
 	
 
 	

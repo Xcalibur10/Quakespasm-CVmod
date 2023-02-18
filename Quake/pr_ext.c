@@ -2053,7 +2053,7 @@ static void PF_getsurfacenearpoint(void)
 	if (!model || model->type != mod_brush || model->needload)
 		return;
 
-	bestdist = 256;
+	bestdist = 16;
 
 	//all polies, we can skip parts. special case.
 	surf = model->surfaces + model->firstmodelsurface;
@@ -7429,9 +7429,9 @@ static void PF_MD3X_tagaxis(void)
 		//Rounding the values. Had a weird glitch where like .0000001 difference made the interpolation turn the longest path... yeah... looked wild.
 
 		//Return rounded values
-		euler_out[0] = round(tag->axis[0]*10000)/10000;
-		euler_out[1] = round(tag->axis[1]*10000)/10000;
-		euler_out[2] = round(tag->axis[2]*10000)/10000;
+		euler_out[0] = round(tag->axis[0]*10000.0)/10000;
+		euler_out[1] = round(tag->axis[1]*10000.0)/10000;
+		euler_out[2] = round(tag->axis[2]*10000.0)/10000;
 	}
 	else
 	{
@@ -7493,6 +7493,168 @@ static void PF_LerpRotation (void)
 ===========================*/
 static void PF_LerpdataBlend(void)
 {
+}
+
+/*========================
+////GetSurfaceTexture/////
+========================*/
+static char* GetSurfaceTexture(edict_t ed, vec3_t point)
+{
+	qmodel_t* mod = qcvm->GetModel(ed.v.modelindex);
+	char* texture = (char*)malloc(16*sizeof(char));
+	//texture = "co";
+
+	char* t = "c";
+	float bestdist = 0x7fffffff, dist;
+	int bestsurf = 0;
+	vec3_t cpoint = { 0,0,0 };
+	msurface_t* surf;
+	int i;
+
+	if (!mod || mod->type != mod_brush || mod->needload)
+	{
+		texture = "x";
+		return;
+	}
+
+	bestdist = 8;
+
+	//all polies, we can skip parts. special case.
+	surf = mod->surfaces + mod->firstmodelsurface;
+	for (i = 0; i < mod->nummodelsurfaces; i++, surf++)
+	{
+		dist = getsurface_clippointpoly(mod, surf, point, cpoint, bestdist);
+		if (dist < bestdist)
+		{
+			bestdist = dist;
+			bestsurf = i;
+		}
+	}
+
+	if (mod && mod->type == mod_brush && !mod->needload && bestsurf < (unsigned int)mod->nummodelsurfaces)
+	{
+		t = mod->surfaces[bestsurf].texinfo->texture->name;
+	}
+
+	strcpy(texture, t);
+	return texture;
+
+}
+
+void remove_leading_characters(char* str) {
+	int index = 0;
+	int len = strlen(str);
+	while (index < len && (str[index] == '+' || str[index] == '{' ||
+		str[index] == '~' || str[index] == '*')) {
+		index++;
+	}
+	int new_len = len - index;
+	memmove(str, str + index, new_len + 1);
+}
+
+/*======================================================================================
+Compares textures names with the material.def content, but only the first MAT_LENGTH characters.
+======================================================================================*/
+#define MAT_LENGTH 8
+
+int materialcmp(const char* str1, const char* str2) {
+
+
+	char str1_copy[MAT_LENGTH+1];
+	char str2_copy[MAT_LENGTH+1];
+	strncpy(str1_copy, str1, MAT_LENGTH);
+	str1_copy[MAT_LENGTH] = '\0';
+	strncpy(str2_copy, str2, MAT_LENGTH);
+	str2_copy[MAT_LENGTH] = '\0';
+	remove_leading_characters(str1_copy);
+	remove_leading_characters(str2_copy);
+	return strcmp(str1_copy, str2_copy);
+}
+
+
+//Access material list (containing list from materials.def
+extern materialprop_t materials[1024];
+
+#define MAT_BADMETAL	0
+#define MAT_BADWOOD		1
+#define MAT_BRICK		2
+#define MAT_CONCRETE	3
+#define MAT_DIRT		4
+#define MAT_FLESH		5
+#define MAT_GLASS		6
+#define MAT_GRASS		7
+#define MAT_LEAVES		8
+#define MAT_METAL		9
+#define MAT_PUDDLE		10
+#define MAT_SNOW		11
+#define MAT_WOOD		12
+#define MAT_INVALID		99
+
+/*============================
+////////GetMaterialType///////
+===========================*/
+static void PF_GetMaterialType(void)
+{
+	char*	texture;
+	edict_t* ed = G_EDICT(OFS_PARM0);
+	float* point;
+	point = G_VECTOR(OFS_PARM1);
+
+	if (ed == NULL)
+		return;
+
+	int i=0;
+	qboolean found = false;
+
+	char* mat_name;
+	char mat_type;
+
+	//Default is concrete, but it's also defaulted in QC so... whatever.
+	mat_type = 'c';
+	
+	// = (char*)malloc(sizeof(char) + 1);
+
+
+	int type_id = 0;
+
+	unsigned int surfid;
+	texture = GetSurfaceTexture(*ed, point);
+
+	while (found == false && i<sizeof(materials))
+	{
+		if (materialcmp(texture,materials[i].name)==0)
+		{
+			found = true;
+			break;
+		}
+		i++;
+	}
+
+	switch (materials[i].type)
+	{
+		case '1': type_id = MAT_BADWOOD; break;
+		case '2': type_id = MAT_BADMETAL; break;
+		case 'b': type_id = MAT_BRICK; break;
+		case 'c': type_id = MAT_CONCRETE; break;
+		case 'd': type_id = MAT_DIRT; break;
+		case 'f': type_id = MAT_FLESH; break;
+		case 'l': type_id = MAT_GLASS; break;
+		case 'g': type_id = MAT_GRASS; break;
+		case 'v': type_id = MAT_LEAVES; break;
+		case 'm': type_id = MAT_METAL; break;
+		case 'p': type_id = MAT_PUDDLE; break;
+		case 's': type_id = MAT_SNOW; break;
+		case 'w': type_id = MAT_WOOD; break;
+		case 'x': type_id = MAT_INVALID; break;
+		default: type_id = MAT_CONCRETE;
+	}
+
+	Con_Printf("Texture: %s %d \n", texture, type_id);
+	free(texture);
+	G_FLOAT(OFS_RETURN) = type_id;
+	//Con_Printf("Material: %s \n", mat_type);
+	
+	//free(mat_type);
 }
 
 /*=====================================================================================================
@@ -7959,6 +8121,7 @@ static struct
 	{ "MD3X_tagaxis",		PF_MD3X_tagaxis,	PF_MD3X_tagaxis,		805,	PF_MD3X_tagaxis, 805, "void(string model, string tagname, float frame)" },
 	{ "lerp_position",		PF_LerpPosition,	PF_LerpPosition,		806,	PF_LerpPosition, 806, "void(vector p1, vector p2, float frac)" },
 	{ "lerp_rotation",		PF_LerpRotation,	PF_LerpRotation,		807,	PF_LerpRotation, 807, "void(vector a1, vector a2, float frac)" },
+	{ "getmaterialtype",	PF_GetMaterialType,	PF_GetMaterialType,		808,	PF_GetMaterialType, 808, "float(entity e, vector vec)" },
 
 };
 

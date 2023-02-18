@@ -765,6 +765,7 @@ void Mod_LoadTextures (lump_t *l)
 
 	//Coffee
 	LoadShadowTexture();
+
 	//johnfitz
 	loadmodel->numtextures = nummiptex + 2; //johnfitz -- need 2 dummy texture chains for missing textures
 	loadmodel->textures = (texture_t **) Hunk_AllocName (loadmodel->numtextures * sizeof(*loadmodel->textures) , loadname);

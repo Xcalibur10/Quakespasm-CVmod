@@ -609,7 +609,7 @@ typedef struct qmodel_s
 	int			nummarksurfaces;
 	msurface_t	**marksurfaces;
 
-	hull_t		hulls[MAX_MAP_HULLS];
+	hull_t		hulls[MAX_MAP_HULLS]; //More hulls!!! -- C0FF33
 
 	int			numtextures;
 	texture_t	**textures;
@@ -655,6 +655,6 @@ void Mod_SetExtraFlags (qmodel_t *mod);
 
 md3Tag_t* R_GetTag(md3Header_t* mod, int frame, const char* tagName);
 md3xTag_t* R_GetMD3XTag(md3Header_t* mod, int frame, const char* tagName);
-void Mod_ReadMD3Data(qmodel_t* mod, void* buffer, float o_framenum, vec3_t o_tagorig, vec3_t o_tagaxis);
+//void Mod_ReadMD3Data(qmodel_t* mod, void* buffer, float o_framenum, vec3_t o_tagorig, vec3_t o_tagaxis);
 
 #endif	// __MODEL__

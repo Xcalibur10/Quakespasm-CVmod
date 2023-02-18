@@ -479,7 +479,6 @@ void Mod_CalcAliasBounds (aliashdr_t *a);
 R_GetTag
 ================
 */
-//static md3Tag_t* R_GetTag(md3Header_t* mod, int frame, const char* tagName) {
 md3Tag_t* R_GetTag(md3Header_t * mod, int frame, const char* tagName) {
 	md3Tag_t* tag;
 	int				i;
@@ -504,7 +503,6 @@ md3Tag_t* R_GetTag(md3Header_t * mod, int frame, const char* tagName) {
 R_GetMD3XTag
 ================
 */
-//static md3Tag_t* R_GetTag(md3Header_t* mod, int frame, const char* tagName) {
 md3xTag_t* R_GetMD3XTag(md3Header_t* mod, int frame, const char* tagName) {
 	md3xTag_t* tag;
 	int				i;

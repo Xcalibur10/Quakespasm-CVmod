@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef struct
 {
 	char name[32];	//name of the material (texture from wad file)
-	char type[2];	//type of the material (metal, snow, wood, etc)
+	char type;	//type of the material (metal, snow, wood, etc)
 } materialprop_t;
 
 typedef struct
@@ -60,7 +60,7 @@ typedef struct
 #define MOVE_HITALLCONTENTS (1<<9)
 
 void LoadMaterialDefs(void);
-void GetSurfaceTexture(edict_t ed, unsigned int surfidx);
+//char* GetSurfaceTexture(edict_t ed, vec_t point);
 
 void SV_ClearWorld (void);
 // called after the world model has been loaded, before linking any entities

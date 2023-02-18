@@ -50,20 +50,9 @@ enum materialtype
 	flesh
 };
 
-void GetSurfaceTexture(edict_t ed, unsigned int surfidx)
-{
-	qmodel_t* mod = qcvm->GetModel(ed.v.modelindex);
 
-	if (mod && mod->type == mod_brush && !mod->needload && surfidx < (unsigned int)mod->nummodelsurfaces)
-	{
-		surfidx += mod->firstmodelsurface;
-		G_INT(OFS_RETURN) = PR_SetEngineString(mod->surfaces[surfidx].texinfo->texture->name);
-	}
-	else
-		G_INT(OFS_RETURN) = 0;
-}
 
-static materialprop_t materials[1024];
+materialprop_t materials[1024];
 
 void LoadMaterialDefs()
 {
@@ -74,14 +63,13 @@ void LoadMaterialDefs()
 	fp = fopen("materials.def", "r");
 	if (fp == NULL)
 	{
-		Con_Printf("Error opening file\n");
+		Con_Printf("Error opening materials.def file!\n");
 		return;
 	}
 
-	while (fscanf(fp, "%s %s", materials[i].type, materials[i].name) != EOF)
+	while (fscanf(fp, "%s %s", &materials[i].type, materials[i].name) != EOF)
 	{
 		i++;
-		Con_Printf("Name: %s, type: %s\n", materials[i].name, materials[i].type);
 	}
 
 
